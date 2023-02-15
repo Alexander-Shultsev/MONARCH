@@ -2,10 +2,9 @@ package com.example.monarch
 
 import android.annotation.SuppressLint
 import android.app.AppOpsManager
-import android.app.usage.UsageEvents
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
-import android.app.usage.UsageStatsManager.INTERVAL_YEARLY
+import android.app.usage.UsageStatsManager.*
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.os.Build
@@ -34,6 +33,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MonarchTheme {
                 // https://proandroiddev.com/accessing-app-usage-history-in-android-79c3af861ccf
+                https://stackoverflow.com/questions/59113756/android-get-usagestats-per-hour
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
 //                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
 
                     if (checkUsageStatsPermission()) {
-                        readContacts()
+                        getStateUsageFromEvent()
                     } else {
                         Log.i(TAG, "onCreate: noPermission")
                     }
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkUsageStatsPermission() : Boolean {
+    private fun checkUsageStatsPermission(): Boolean {
         val appOpsManager = getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager
         // `AppOpsManager.checkOpNoThrow` is deprecated from Android Q
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -61,8 +61,7 @@ class MainActivity : ComponentActivity() {
                 Process.myUid(),
                 packageName
             )
-        }
-        else {
+        } else {
             appOpsManager.checkOpNoThrow(
                 "android:get_usage_stats",
                 Process.myUid(),
@@ -72,11 +71,26 @@ class MainActivity : ComponentActivity() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    @SuppressLint("ServiceCast")
-    fun readContacts() {
+    fun getStateUsageFromEvent() {
         val statsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        var list : MutableList<UsageStats>
-        val list2 : Map<String, UsageStats>
+
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale("RU"))
+        val startTime = parser.parse("2023-02-15T16:00:00")?.time ?: 0
+        val endTime = parser.parse("2023-02-15T17:00:00")?.time ?: 0
+
+        val statsEvent = statsManager.queryEvents(
+            startTime,
+            endTime
+        )
+
+        Log.i(TAG, statsEvent.toString())
+    }
+
+    @SuppressLint("ServiceCast")
+    fun getStateUsage() {
+        val statsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        var list: MutableList<UsageStats>
+        var list2: Map<String, UsageStats>
 
         val cal = Calendar.getInstance()
         cal.add(Calendar.YEAR, -1)
@@ -85,8 +99,8 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
             // первый способ
-            val userManager = getSystemService( Context.USER_SERVICE ) as UserManager
-            if ( userManager.isUserUnlocked ) {
+            val userManager = getSystemService(Context.USER_SERVICE) as UserManager
+            if (userManager.isUserUnlocked) {
                 list = statsManager.queryUsageStats(
                     UsageStatsManager.INTERVAL_YEARLY,
                     cal.timeInMillis,
@@ -101,20 +115,33 @@ class MainActivity : ComponentActivity() {
 
                      // Всего времени в приложениях (работает по другому)
                     if (list[i].lastTimeUsed > 0) {
-                        Log.i(
-                            TAG,
-                            "${list[i].packageName}, ${getDate(list[i].totalTimeInForeground)}, ${getDate(list[i].lastTimeUsed)}"
-                        )
+//                        Log.i(
+//                            TAG,
+//                            "${list[i].packageName}, ${getDate(list[i].totalTimeInForeground)}, ${getDate(list[i].lastTimeUsed)}"
+//                        )
                     }
                 }
-            }
 
-            // второй способ
-            /* TODO проверить работу */
-            list2 = statsManager.queryAndAggregateUsageStats(
-                cal.timeInMillis,
-                System.currentTimeMillis()
-            )
+                // второй способ
+                /* TODO проверить работу */
+                list2 = statsManager.queryAndAggregateUsageStats(
+                    cal.timeInMillis,
+                    System.currentTimeMillis()
+                )
+
+
+                for ((key, value) in list2) {
+                    if (value!!.packageName == "com.google.android.networkstack.tethering") {
+//                        Log.i(
+//                            TAG,
+//                            "${value.packageName}, ${getDate(value.firstTimeStamp)}, ${getDate(value.lastTimeStamp)}"
+//                        )
+                        Log.i(TAG, "$key\n")
+                    }
+                }
+
+//                Log.i(TAG, "readContacts: $list2")
+            }
         }
     }
 
@@ -129,7 +156,6 @@ class MainActivity : ComponentActivity() {
         return formatter.format(calendar.time)
     }
 }
-
 
 
 @Composable
