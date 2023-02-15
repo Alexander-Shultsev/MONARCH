@@ -76,12 +76,15 @@ class MainActivity : ComponentActivity() {
     fun readContacts() {
         val statsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         var list : MutableList<UsageStats>
-        val list2 : UsageEvents
+        val list2 : Map<String, UsageStats>
 
         val cal = Calendar.getInstance()
         cal.add(Calendar.YEAR, -1)
 
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+            // первый способ
             val userManager = getSystemService( Context.USER_SERVICE ) as UserManager
             if ( userManager.isUserUnlocked ) {
                 list = statsManager.queryUsageStats(
@@ -105,6 +108,13 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+
+            // второй способ
+            /* TODO проверить работу */
+            list2 = statsManager.queryAndAggregateUsageStats(
+                cal.timeInMillis,
+                System.currentTimeMillis()
+            )
         }
     }
 
