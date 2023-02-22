@@ -2,6 +2,8 @@ package com.example.monarch
 
 import android.annotation.SuppressLint
 import android.app.AppOpsManager
+import android.app.usage.UsageEvents
+import android.app.usage.UsageEvents.Event
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.app.usage.UsageStatsManager.*
@@ -33,7 +35,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MonarchTheme {
                 // https://proandroiddev.com/accessing-app-usage-history-in-android-79c3af861ccf
-                https://stackoverflow.com/questions/59113756/android-get-usagestats-per-hour
+                // https://stackoverflow.com/questions/59113756/android-get-usagestats-per-hour
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -72,18 +74,100 @@ class MainActivity : ComponentActivity() {
     }
 
     fun getStateUsageFromEvent() {
+
+        val currentEvent = UsageEvents.Event()
+        val map = HashMap<String, AppUsageInfo>()
+        val sameEvents = HashMap<String, ArrayList<UsageEvents.Event>>()
+
         val statsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
         val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale("RU"))
         val startTime = parser.parse("2023-02-15T16:00:00")?.time ?: 0
-        val endTime = parser.parse("2023-02-15T17:00:00")?.time ?: 0
+        val endTime = parser.parse("2024-02-15T17:00:00")?.time ?: 0
 
         val statsEvent = statsManager.queryEvents(
             startTime,
             endTime
         )
 
-        Log.i(TAG, statsEvent.toString())
+        while (statsEvent.hasNextEvent()) {
+            statsEvent.getNextEvent(currentEvent)
+            if (currentEvent.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
+                currentEvent.eventType == UsageEvents.Event.ACTIVITY_STOPPED
+            ) {
+                val key = currentEvent.packageName
+                if (map[key] == null) { // check package is not in map
+                    map.put(key, AppUsageInfo(key))
+                    sameEvents.put(key, ArrayList<UsageEvents.Event>())
+                }
+                sameEvents[key]!!.add(currentEvent)
+            }
+        }
+
+        for (elem in sameEvents) {
+            val elemEventsCount = elem.value.size
+            if (elemEventsCount > 1) {
+                    for (event in 0 until elemEventsCount - 1) {
+                        val event0 = elem.value[event]
+                        val event1 = elem.value[event + 1]
+
+                        if (event0.eventType == Event.ACTIVITY_RESUMED
+                            || event1.eventType == Event.ACTIVITY_RESUMED
+                        ) {
+                            map[event1.packageName]!!.launchCount++;
+                        }
+
+                        Log.i(TAG, "${event0.eventType}")
+
+//                        if (event0.eventType == Event.ACTIVITY_RESUMED
+//                            && event1.eventType == Event.ACTIVITY_STOPPED
+//                        ) {
+//                            val timeInForeground: Long = event1.timeStamp - event0.timeStamp;
+//
+//                            Log.i(TAG, "${elem.key}")
+//                            Log.i(TAG, "${getDate(elem.value[event].timeStamp)}")
+//                            Log.i(TAG, "${getDate(elem.value[event + 1].timeStamp)}")
+//                            Log.i(TAG, "${getDate(timeInForeground)}")
+//
+//                            map[event0.packageName]!!.timeInForeground += timeInForeground
+//                        }
+                }
+            }
+        }
+
+        // Traverse through each app data which is grouped together and count launch, calculate duration
+//        for (Map.Entry<String,List<UsageEvents.Event>> entry : sameEvents.entrySet()) {
+//            int totalEvents = entry . getValue ().size();
+//            if (totalEvents > 1) {
+//                for (int i = 0; i < totalEvents - 1; i++) {
+//                    UsageEvents.Event E0 = entry . getValue ().get(i);
+//                    UsageEvents.Event E1 = entry . getValue ().get(i + 1);
+//
+//                    if (E1.getEventType() == 1 || E0.getEventType() == 1) {
+//                        map.get(E1.getPackageName()).launchCount++;
+//                    }
+//
+//                    if (E0.getEventType() == 1 && E1.getEventType() == 2) {
+//                        long diff = E1 . getTimeStamp () - E0.getTimeStamp();
+//                        map.get(E0.getPackageName()).timeInForeground += diff;
+//                    }
+//                }
+//            }
+//
+//            // If First eventtype is ACTIVITY_PAUSED then added the difference of start_time and Event occuring time because the application is already running.
+//            if (entry.getValue().get(0).getEventType() == 2) {
+//                long diff = entry . getValue ().get(0).getTimeStamp() - start_time;
+//                map.get(entry.getValue().get(0).getPackageName()).timeInForeground += diff;
+//            }
+//
+//            // If Last eventtype is ACTIVITY_RESUMED then added the difference of end_time and Event occuring time because the application is still running .
+//            if (entry.getValue().get(totalEvents - 1).getEventType() == 1) {
+//                long diff = end_time -entry.getValue().get(totalEvents - 1).getTimeStamp();
+//                map.get(
+//                    entry.getValue().get(totalEvents - 1).getPackageName()
+//                ).timeInForeground += diff;
+//            }
+//        }
     }
 
     @SuppressLint("ServiceCast")
