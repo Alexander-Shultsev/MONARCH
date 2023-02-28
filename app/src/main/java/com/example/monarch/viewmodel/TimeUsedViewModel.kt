@@ -10,33 +10,39 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.monarch.module.TimeUsed
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-class TimeUsedViewModel: ViewModel() {
+class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
 
     companion object {
         const val MINIMUM_GET_TIME: Long = 1000L // минимально собираемый промежуток времени одной сессии
+        const val DEFAULT_DATE: String = "26.02.2023" // минимально собираемый промежуток времени одной сессии
     }
 
-    private val sameEvents = HashMap<String, MutableList<UsageEvents.Event>>()
+    private var eventList = HashMap<String, MutableList<UsageEvents.Event>>()
     private var timeInPackage: Long = 0L
 
     private val _action: MutableLiveData<Action> = MutableLiveData()
     val action: LiveData<Action> = _action
 
-    private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData(arrayListOf())
+    private val _dateDialogIsVisible: MutableLiveData<Boolean> = MutableLiveData()
+    val dateDialogIsVisible: LiveData<Boolean> = _dateDialogIsVisible
+
+    private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData()
     val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
+    var timeUsedInfoBuffer = ArrayList<TimeUsed>() // временная переменная для динамического хранения списка
+
+    init {
+        _timeUsedInfo.value = arrayListOf()
+        _dateDialogIsVisible.value = false
+    }
 
     class Action(private var value: Int) {
         companion object {
             const val QUERY_PERMISSION_STATE_USED = 0
-            const val OTHER = 1
+            const val TOAST = 1
         }
 
         fun getValue(): Int {
@@ -48,41 +54,27 @@ class TimeUsedViewModel: ViewModel() {
         }
     }
 
-//    ---------------------------------------
-    sealed class Event {
-        object NavigateToSettings: Event()
-        data class ShowSnackBar(val text: String): Event()
-        data class ShowToast(val text: String): Event()
-    }
-
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    val eventsFlow = eventChannel.receiveAsFlow()
-
-    init {
-        viewModelScope.launch {
-            eventChannel.send(Event.ShowSnackBar("Sample"))
-            eventChannel.send(Event.ShowToast("Toast"))
-        }
-    }
-
-    fun settingsButtonClicked() {
-        viewModelScope.launch {
-            eventChannel.send(Event.NavigateToSettings)
-        }
-    }
-
-    //    ---------------------------------------
-
-    private fun getStateUsageFromEvent(statsManager: UsageStatsManager) {
+    private fun getStateUsageFromEvent(
+        statsManager: UsageStatsManager,
+        date: Date
+    ) {
+        eventList = HashMap<String, MutableList<UsageEvents.Event>>()
+        timeUsedInfoBuffer = arrayListOf()
         var currentEvent: UsageEvents.Event
 
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale("RU"))
-        val startTime = parser.parse("2023-02-24T10:00:00")?.time ?: 0
-        val endTime = parser.parse("2023-02-25T10:00:00")?.time ?: 0
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        calendar.add(Calendar.HOUR, 23)
+        calendar.add(Calendar.MINUTE, 59)
+        calendar.add(Calendar.SECOND, 59)
+
+//        val parser = SimpleDateFormat("dd.MM.yyyy'T'HH:mm:ss", Locale("RU"))
+//        val startTime = parser.parse("${date}T00:00:00")?.time ?: 0
+//        val endTime = parser.parse("${date}T23:59:59")?.time ?: 0
 
         val statsEvent = statsManager.queryEvents(
-            startTime,
-            endTime
+            date.time,
+            calendar.timeInMillis
         )
 
         // TODO объединить 2 цикла в 1
@@ -94,15 +86,15 @@ class TimeUsedViewModel: ViewModel() {
                 currentEvent.eventType == 2
             ) {
                 val key = currentEvent.packageName
-                if (sameEvents[key] == null) { // check package is not in map
-                    sameEvents[key] = mutableListOf()
+                if (eventList[key] == null) { // check package is not in map
+                    eventList[key] = mutableListOf()
                 }
-                sameEvents[key]!!.add(currentEvent)
+                eventList[key]!!.add(currentEvent)
             }
         }
 
         // перебор всех пакетов с группой событий
-        for (elem in sameEvents) {
+        for (elem in eventList) {
             val elemEventsCount = elem.value.size
             if (elemEventsCount > 1) {
                 val packageName = elem.key
@@ -125,6 +117,9 @@ class TimeUsedViewModel: ViewModel() {
                 }
             }
         }
+
+        _timeUsedInfo.value = timeUsedInfoBuffer
+        Log.i(TAG, _timeUsedInfo.value.toString())
     }
 
     fun isUsageStatsPermission(
@@ -132,19 +127,13 @@ class TimeUsedViewModel: ViewModel() {
         appOpsManager: AppOpsManager,
         packageName: String
     ) {
-        Log.i(TAG, "isUsageStatsPermission: ${action.value}")
-        Log.i(TAG, "isUsageStatsPermission: ${_action.value}")
-
-        _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
-
-
-        Log.i(TAG, "isUsageStatsPermission: ${action.value}")
-        Log.i(TAG, "isUsageStatsPermission: ${_action.value}")
-//        if (checkUsageStatsPermission(appOpsManager, packageName)) {
-//            getStateUsageFromEvent(statsManager)
-//        } else {
-//            action.value?.setValue(Action.QUERY_PERMISSION_STATE_USED)
-//        }
+        if (checkUsageStatsPermission(appOpsManager, packageName)) {
+            val formatter = SimpleDateFormat("dd.MM.yyyy", Locale("RU"))
+            val dateToDate = formatter.parse(DEFAULT_DATE)
+            getStateUsageFromEvent(statsManager, dateToDate!!)
+        } else {
+            _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
+        }
     }
 
     private fun checkUsageStatsPermission(
@@ -168,7 +157,8 @@ class TimeUsedViewModel: ViewModel() {
     }
 
     private fun addInPackageAndSort(packageName: String, timeInForeground: Long): Boolean {
-        timeUsedInfo.value?.add(
+        Log.i(TAG, "addInPackageAndSort: 1")
+        timeUsedInfoBuffer.add(
             TimeUsed(
                 packageName = "",
                 position = 0,
@@ -176,39 +166,51 @@ class TimeUsedViewModel: ViewModel() {
             )
         )
 
-        if (timeUsedInfo.value?.size!! > 1) {
+        if (timeUsedInfoBuffer.size > 1) {
             var findElem = false
-            for (currentPosition in 0 until timeUsedInfo.value!!.size - 1) {
-                if (timeInForeground > timeUsedInfo.value!![currentPosition].getTimeInForeground()) {
-                    var changeIndex = timeUsedInfo.value!!.size - 1
+            for (currentPosition in 0 until timeUsedInfoBuffer.size - 1) {
+                if (timeInForeground > timeUsedInfoBuffer[currentPosition].getTimeInForeground()) {
+                    var changeIndex = timeUsedInfoBuffer.size - 1
 
                     while (changeIndex > currentPosition) {
-                        timeUsedInfo.value!![changeIndex].apply {
-                            this.setPackageName(timeUsedInfo.value!![changeIndex - 1].getPackageName())
-                            this.setTimeInForeground(timeUsedInfo.value!![changeIndex - 1].getTimeInForeground())
+                        timeUsedInfoBuffer[changeIndex].apply {
+                            this.setPackageName(timeUsedInfoBuffer[changeIndex - 1].getPackageName())
+                            this.setTimeInForeground(timeUsedInfoBuffer[changeIndex - 1].getTimeInForeground())
                         }
                         changeIndex--
                     }
 
-                    timeUsedInfo.value!![currentPosition].setPackageName(packageName)
-                    timeUsedInfo.value!![currentPosition].setTimeInForeground(timeInForeground)
+                    timeUsedInfoBuffer[currentPosition].setPackageName(packageName)
+                    timeUsedInfoBuffer[currentPosition].setTimeInForeground(timeInForeground)
                     findElem = true
                     return true
                 }
             }
 
             if (!findElem) {
-                timeUsedInfo.value!![timeUsedInfo.value!!.size - 1].apply {
+                timeUsedInfoBuffer[timeUsedInfoBuffer.size - 1].apply {
                     this.setPackageName(packageName)
                     this.setTimeInForeground(timeInForeground)
                 }
             }
         } else {
-            timeUsedInfo.value!![0].apply {
+            timeUsedInfoBuffer[0].apply {
                 this.setPackageName(packageName)
                 this.setTimeInForeground(timeInForeground)
             }
         }
         return true
+    }
+
+    fun onDateSelected(date: Date) {
+        getStateUsageFromEvent(statsManager, date)
+    }
+
+    fun closeDialog() {
+        _dateDialogIsVisible.value = false
+    }
+
+    fun changeDateDialogVisible(isVisible: Boolean) {
+        _dateDialogIsVisible.value = !isVisible
     }
 }

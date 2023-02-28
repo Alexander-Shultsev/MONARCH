@@ -1,41 +1,38 @@
 package com.example.monarch.ui.screen
 
+import android.app.Activity
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.monarch.common.DatePicker
 import com.example.monarch.common.DateTime
-import com.example.monarch.common.MaskTransformation
-import com.example.monarch.ui.theme.MonarchTheme
 import com.example.monarch.viewmodel.TimeUsedViewModel
-import java.sql.Statement
+import com.example.monarch.viewmodel.TimeUsedViewModel.Companion.DEFAULT_DATE
 
 @Composable
 fun MainScreen(
     statsManager: UsageStatsManager,
     appOpsManager: AppOpsManager,
     packageName: String,
-    viewModel: TimeUsedViewModel = TimeUsedViewModel()
+    viewModel: TimeUsedViewModel,
+    activity: Activity
 ) {
-    val inputDate = remember { mutableStateOf("") }
-    val timeUsedInfo = viewModel.timeUsedInfo.observeAsState()
+    val inputDate = remember { mutableStateOf(DEFAULT_DATE) }
+    val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
+
+    val timeUsedInfo = viewModel.timeUsedInfo.observeAsState(arrayListOf())
     viewModel.isUsageStatsPermission(statsManager, appOpsManager, packageName)
 
     Surface(
@@ -47,17 +44,15 @@ fun MainScreen(
         Column {
             OutlinedTextField(
                 value = inputDate.value,
-                onValueChange = { it ->
-                    if (it.length <= 8) {
-                        inputDate.value = it.filter { it.isDigit() }
-                        if (it.length == 8) {
-
-                        }
+                onValueChange = { dateText ->
+                    inputDate.value = dateText
+                    if (dateText.length == 10) {
+                        viewModel.updateDate(dateText, statsManager, activity)
                     }
                 },
-                placeholder = { Text(text = "____.__.__") },
+                placeholder = { Text(text = "дд.мм.гггг") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = MaskTransformation(),
+//                visualTransformation = MaskTransformation(),
             )
         }
         LazyColumn(
@@ -70,7 +65,7 @@ fun MainScreen(
                             horizontal = 24.dp
                         )
                     ) {
-                        for (elem in timeUsedInfo.value!!) {
+                        for (elem in timeUsedInfo.value) {
                             Text(
                                 text = elem.getPackageName(),
                                 modifier = Modifier.padding(bottom = 2.dp)
@@ -85,5 +80,14 @@ fun MainScreen(
                 }
             }
         )
+        if (dateDialogIsVisible.value) {
+            DatePicker({ viewModel.onDateSelected(it) }, { viewModel.closeDialog() })
+        }
+
+        Button(
+            onClick = { viewModel.changeDateDialogVisible(dateDialogIsVisible.value) }
+        ) {
+            Text(text = "Изменить дату")
+        }
     }
 }
