@@ -9,33 +9,18 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.ContextThemeWrapper
-import android.widget.CalendarView
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.example.monarch.common.DatePicker
 import com.example.monarch.ui.screen.MainScreen
 import com.example.monarch.ui.theme.MonarchTheme
 import com.example.monarch.viewmodel.TimeUsedViewModel
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +36,8 @@ class MainActivity : ComponentActivity() {
         init()
         createObserve()
         setContent()
+
+//        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
     }
 
     private fun init() {
@@ -62,32 +49,53 @@ class MainActivity : ComponentActivity() {
 
     private fun createObserve() {
         viewModel.action.observe(this) { newAction ->
-            handleAction(newAction)
+            handleAction(newAction, viewModel)
         }
     }
 
     private fun setContent() {
         setContent {
             MonarchTheme {
-                // https://www.youtube.com/watch?v=xcfEQO0k_gU
-                // https://proandroiddev.com/accessing-app-usage-history-in-android-79c3af861ccf
-                // https://stackoverflow.com/questions/59113756/android-get-usagestats-per-hour
-                MainScreen(
-                    statsManager,
-                    appOpsManager,
-                    packageName,
-                    viewModel,
-                    this
-                )
+                Surface(
+                    color = MaterialTheme.colors.primary,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // https://www.youtube.com/watch?v=xcfEQO0k_gU
+                    // https://proandroiddev.com/accessing-app-usage-history-in-android-79c3af861ccf
+                    // https://stackoverflow.com/questions/59113756/android-get-usagestats-per-hour
+                    MainScreen(
+                        statsManager,
+                        appOpsManager,
+                        packageName,
+                        viewModel,
+                    )
+                }
             }
         }
     }
 
-    private fun handleAction(action: TimeUsedViewModel.Action) {
-        when (action.getValue()) {
-            TimeUsedViewModel.Action.QUERY_PERMISSION_STATE_USED -> {
-                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+    private val resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // There are no request codes
+                val data: Intent? = result.data
+                viewModel.setGrantedUsageStatsPermission()
+                Log.i(TAG, "registerLauncher: ${viewModel.stateUsagePermission}")
             }
         }
+
+    private fun handleAction(
+        action: TimeUsedViewModel.Action,
+        viewModel: TimeUsedViewModel
+    ) {
+        when (action.getValue()) {
+            TimeUsedViewModel.Action.QUERY_PERMISSION_STATE_USED -> {
+//                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                resultLauncher.launch(intent)
+            }
+        }
+
+
     }
 }

@@ -12,14 +12,29 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.monarch.module.TimeUsed
 import java.text.SimpleDateFormat
+import java.time.ZonedDateTime
 import java.util.*
+import kotlin.collections.HashMap
 
 class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
 
     companion object {
         const val MINIMUM_GET_TIME: Long = 1000L // минимально собираемый промежуток времени одной сессии
-        const val DEFAULT_DATE: String = "26.02.2023" // минимально собираемый промежуток времени одной сессии
+        var DEFAULT_DATE: Date = Date() // минимально собираемый промежуток времени одной сессии
+        init {
+            val formatter = SimpleDateFormat("MM-dd-yyyy", Locale("RU"))
+            DEFAULT_DATE = formatter.parse(formatter.format(Date())) as Date
+
+
+
+
+        }
     }
+
+    val dayFormat = SimpleDateFormat("d", Locale("RU"))
+    val monthFormat = SimpleDateFormat("MMMM", Locale("RU"))
+    val dayOfWeekFormat = SimpleDateFormat("EEE", Locale("RU"))
+    val yearFormat = SimpleDateFormat("yyyy", Locale("RU"))
 
     private var eventList = HashMap<String, MutableList<UsageEvents.Event>>()
     private var timeInPackage: Long = 0L
@@ -30,6 +45,12 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
     private val _dateDialogIsVisible: MutableLiveData<Boolean> = MutableLiveData()
     val dateDialogIsVisible: LiveData<Boolean> = _dateDialogIsVisible
 
+    private val _stateUsagePermission: MutableLiveData<Boolean> = MutableLiveData()
+    val stateUsagePermission: LiveData<Boolean> = _stateUsagePermission
+
+    private val _currentDate: MutableLiveData<HashMap<String, String>> = MutableLiveData()
+    val currentDate: LiveData<HashMap<String, String>> = _currentDate
+
     private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData()
     val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
     var timeUsedInfoBuffer = ArrayList<TimeUsed>() // временная переменная для динамического хранения списка
@@ -37,6 +58,20 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
     init {
         _timeUsedInfo.value = arrayListOf()
         _dateDialogIsVisible.value = false
+
+        getDateSeparate(DEFAULT_DATE)
+    }
+
+    private fun getDateSeparate(date: Date) {
+        val day = dayFormat.format(date)
+        val month = monthFormat.format(date)
+        val dayOfWeek = dayOfWeekFormat.format(date)
+        val year = yearFormat.format(date)
+
+        _currentDate.value?.set("day", day)
+        _currentDate.value?.set("month", month)
+        _currentDate.value?.set("dayOfWeek", dayOfWeek)
+        _currentDate.value?.set("year", year)
     }
 
     class Action(private var value: Int) {
@@ -54,11 +89,11 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         }
     }
 
-    private fun getStateUsageFromEvent(
+    fun getStateUsageFromEvent(
         statsManager: UsageStatsManager,
         date: Date
     ) {
-        eventList = HashMap<String, MutableList<UsageEvents.Event>>()
+        eventList = HashMap()
         timeUsedInfoBuffer = arrayListOf()
         var currentEvent: UsageEvents.Event
 
@@ -77,6 +112,8 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
             calendar.timeInMillis
         )
 
+        Log.i(TAG, "getStateUsageFromEvent: ${date.time}, ${calendar.timeInMillis}")
+
         // TODO объединить 2 цикла в 1
 
         while (statsEvent.hasNextEvent()) {
@@ -92,6 +129,7 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
                 eventList[key]!!.add(currentEvent)
             }
         }
+
 
         // перебор всех пакетов с группой событий
         for (elem in eventList) {
@@ -119,7 +157,15 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         }
 
         _timeUsedInfo.value = timeUsedInfoBuffer
-        Log.i(TAG, _timeUsedInfo.value.toString())
+    }
+
+
+    // --------------------------------------------------
+    // Выдача разрешение на сбор данных об использовании устройства
+    // --------------------------------------------------
+
+    fun setGrantedUsageStatsPermission() {
+        _stateUsagePermission.value = true
     }
 
     fun isUsageStatsPermission(
@@ -127,16 +173,15 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         appOpsManager: AppOpsManager,
         packageName: String
     ) {
-        if (checkUsageStatsPermission(appOpsManager, packageName)) {
-            val formatter = SimpleDateFormat("dd.MM.yyyy", Locale("RU"))
-            val dateToDate = formatter.parse(DEFAULT_DATE)
-            getStateUsageFromEvent(statsManager, dateToDate!!)
+        _stateUsagePermission.value = checkUsageStatsPermission(appOpsManager, packageName)
+        if (_stateUsagePermission.value!!) {
+            getStateUsageFromEvent(statsManager, DEFAULT_DATE)
         } else {
             _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
         }
     }
 
-    private fun checkUsageStatsPermission(
+    fun checkUsageStatsPermission(
         appOpsManager: AppOpsManager,
         packageName: String
     ): Boolean {
@@ -157,7 +202,6 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
     }
 
     private fun addInPackageAndSort(packageName: String, timeInForeground: Long): Boolean {
-        Log.i(TAG, "addInPackageAndSort: 1")
         timeUsedInfoBuffer.add(
             TimeUsed(
                 packageName = "",
@@ -204,6 +248,7 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
 
     fun onDateSelected(date: Date) {
         getStateUsageFromEvent(statsManager, date)
+        getDateSeparate(date)
     }
 
     fun closeDialog() {
