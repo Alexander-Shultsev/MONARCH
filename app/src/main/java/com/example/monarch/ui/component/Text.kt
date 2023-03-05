@@ -6,10 +6,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.sp
 import com.example.monarch.ui.theme.manrope
+import java.util.*
 
 /* h1 h2 h3 h4 h5 h6 subtitle1 subtitle2 body1 body2 button caption */
 
@@ -62,8 +63,9 @@ fun H2(
         modifier = modifier)
 }
 
+
 @Composable
-fun H4(
+fun Title1(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Color.White
@@ -72,8 +74,57 @@ fun H4(
         text = text,
         style = TextStyle(
             fontFamily = manrope,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp,
+            color = color),
+        modifier = modifier)
+}
+
+@Composable
+fun Title2(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    Text(
+        text = text.uppercase(),
+        style = TextStyle(
+            fontFamily = manrope,
+            fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             color = color),
         modifier = modifier)
+}
+
+@Composable
+fun H5(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    Text(
+        text = text,
+        style = TextStyle(
+            fontFamily = manrope,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            color = color),
+        modifier = modifier)
+}
+
+@Composable
+fun H6(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    Text(
+        text = text,
+        style = TextStyle(
+            fontFamily = manrope,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 14.sp,
+            color = color),
+        modifier = modifier,
+    textAlign = TextAlign.End)
 }

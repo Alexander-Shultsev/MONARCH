@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -17,7 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.monarch.R
+import com.example.monarch.ui.Subtitle1
+import com.monarchcompany.monarchapp.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -53,10 +53,9 @@ fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
                     onClick = closeDialog
                 ) {
                     //TODO - hardcode string
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.button,
-                        color = MaterialTheme.colors.onPrimary
+                    Subtitle1(
+                        text = "Передумал",
+                        color = MaterialTheme.colors.onSurface
                     )
                 }
 
@@ -67,10 +66,9 @@ fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
                     }
                 ) {
                     //TODO - hardcode string
-                    Text(
-                        text = "OK",
-                        style = MaterialTheme.typography.button,
-                        color = MaterialTheme.colors.onPrimary
+                    Subtitle1(
+                        text = "Покажи",
+                        color = MaterialTheme.colors.onSurface
                     )
                 }
 

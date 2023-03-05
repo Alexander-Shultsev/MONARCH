@@ -3,6 +3,7 @@
 
     <style name="Theme.Monarch" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@color/main</item>
+        <item name="android:colorAccent">@color/main</item>
     </style>
 
 </resources>

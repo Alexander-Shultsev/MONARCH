@@ -18,9 +18,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Monarch"
+        android:usesCleartextTraffic="false"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.monarch.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Monarch">

@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace 'com.example.monarch'
+    namespace "com.monarchcompany.monarchapp"
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.monarch"
+        applicationId "com.monarchcompany.monarchapp"
         minSdk 23
         targetSdk 33
         versionCode 1
-        versionName "1.0"
+        versionName "0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -4,33 +4,32 @@ package com.example.monarch.ui.screen
 import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LiveData
 import com.example.monarch.common.DatePicker
 import com.example.monarch.common.DateTime
-import com.example.monarch.module.TimeUsed
-import com.example.monarch.ui.ButtonText
-import com.example.monarch.ui.H2
-import com.example.monarch.ui.H4
-import com.example.monarch.ui.Subtitle1
+import com.example.monarch.ui.*
 import com.example.monarch.ui.theme.*
 import com.example.monarch.viewmodel.TimeUsedViewModel
+import com.monarchcompany.monarchapp.R
+import kotlinx.coroutines.delay
 import java.util.*
-import kotlin.collections.HashMap
+import kotlin.collections.ArrayList
 
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -131,12 +130,16 @@ fun RequestPermissionGetStateUsageScreen(
                     }
                     .padding(vertical = 16.dp, horizontal = 40.dp),
             ) {
-                ButtonText(TextData.RequestPermissionScreen.button, color = MaterialTheme.colors.primary)
+                ButtonText(
+                    TextData.RequestPermissionScreen.button,
+                    color = MaterialTheme.colors.primary
+                )
             }
         }
     }
 }
 
+@SuppressLint("MutableCollectionMutableState")
 @Composable
 fun StateUsageScreen(
     viewModel: TimeUsedViewModel,
@@ -145,6 +148,9 @@ fun StateUsageScreen(
     val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
     val timeUsedInfo = viewModel.timeUsedInfo.observeAsState()
     val currentDate = viewModel.currentDate.observeAsState()
+    val animateItem = viewModel.animateItem.observeAsState()
+    val count = timeUsedInfo.value!!.size
+
 
 //    val timeUsedInfo = arrayListOf(
 //        TimeUsed(
@@ -171,30 +177,26 @@ fun StateUsageScreen(
             Modifier
                 .padding(vertical = 20.dp, horizontal = Dimention.Main.paddingMain)
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.Center
         ) {
+            currentDate.value?.get("day")?.let { day ->
+                currentDate.value?.get("month")?.let { month ->
+                    currentDate.value?.get("year")?.let { year ->
+                        Title1(
+                            text = "$day $month $year",
+                            color = MaterialTheme.colors.onPrimary,
+                        )
+                    }
+                }
+            }
+
             currentDate.value?.get("dayOfWeek")?.let { dayOfWeek ->
-                H4(
+                Title1(
                     text = dayOfWeek,
                     color = onPrimaryMedium,
-                    modifier = Modifier.padding(bottom = 2.dp)
+                    modifier = Modifier.padding(start = 7.dp)
                 )
-            }
-            currentDate.value?.get("day")?.let { day ->
-                H2(
-                    text = day,
-                    color = MaterialTheme.colors.onPrimary,
-                    modifier = Modifier.padding(start = 10.dp)
-                )
-            }
-            currentDate.value?.get("month")?.let { month ->
-                currentDate.value?.get("year")?.let { year ->
-                    H4(
-                        text = "$month $year",
-                        color = MaterialTheme.colors.onPrimary,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
-                    )
-                }
             }
         }
         LazyColumn(
@@ -202,24 +204,41 @@ fun StateUsageScreen(
                 .fillMaxSize(),
             content = {
                 item {
-                    Column(
-                        modifier = Modifier.padding(
-                            vertical = 24.dp,
-                            horizontal = 24.dp
-                        )
-                    ) {
-                        for (elem in timeUsedInfo.value!!) {
-                            Text(
-                                text = elem.getPackageName(),
-                                modifier = Modifier.padding(bottom = 2.dp)
-                            )
+                    for (elem in 0 until count) {
+                        AnimatedVisibility(
+                            visible = animateItem.value!!
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .background(MaterialTheme.colors.secondary)
+                                    .fillMaxWidth(),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(
+                                            horizontal = 10.dp,
+                                            vertical = 6.dp
+                                        )
+                                        .fillMaxWidth()
+                                ) {
+                                    H5(
+                                        text = timeUsedInfo.value!![elem].getPackageName(),
+                                        modifier = Modifier.padding(bottom = 2.dp),
+                                        color = MaterialTheme.colors.primary
+                                    )
 
-                            Text(
-                                text = DateTime.getTime(elem.getTimeInForeground()),
-                                modifier = Modifier.padding(bottom = 7.dp)
-                            )
+                                    H6(
+                                        text = DateTime.getTime(timeUsedInfo.value!![elem].getTimeInForeground()),
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        color = MaterialTheme.colors.primary
+                                    )
+                                }
+                            }
                         }
+                        Spacer(modifier = Modifier.height(5.dp))
                     }
+                    Spacer(modifier = Modifier.height(90.dp))
                 }
             }
         )
@@ -230,18 +249,31 @@ fun StateUsageScreen(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End
     ) {
-        Button(
-            onClick = {
-                viewModel.changeDateDialogVisible(dateDialogIsVisible.value)
-            },
+        Box(
+            modifier = Modifier
+                .size(70.dp)
+                .clip(shape = RoundedCornerShape(topStartPercent = 100))
+                .background(MaterialTheme.colors.onPrimary)
+                .padding(start = 12.dp, top = 12.dp)
+                .clickable {
+                    viewModel.changeDateDialogVisible(dateDialogIsVisible.value)
+                },
+            contentAlignment = Alignment.Center
         ) {
-            Text(text = "Изменить дату")
+            Icon(
+                imageVector = ImageVector.vectorResource(id = R.drawable.ic_calendar),
+                contentDescription = null,
+                modifier = Modifier.size(30.dp),
+                tint = MaterialTheme.colors.primary
+            )
         }
     }
 
     if (dateDialogIsVisible.value) {
         DatePicker({
-            viewModel.onDateSelected(it) }, { viewModel.closeDialog()
+            viewModel.onDateSelected(it)
+        }, {
+            viewModel.closeDialog()
         })
     }
 }

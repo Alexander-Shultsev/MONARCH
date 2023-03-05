@@ -19,6 +19,7 @@ val LightColorPalette = lightColors(
     secondary = Orange,
     surface = Color.White, // date time picker background
     error = Red,
+    onSurface = Purple
 )
 
 fun color(

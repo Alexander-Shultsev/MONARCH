@@ -24,17 +24,8 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         init {
             val formatter = SimpleDateFormat("MM-dd-yyyy", Locale("RU"))
             DEFAULT_DATE = formatter.parse(formatter.format(Date())) as Date
-
-
-
-
         }
     }
-
-    val dayFormat = SimpleDateFormat("d", Locale("RU"))
-    val monthFormat = SimpleDateFormat("MMMM", Locale("RU"))
-    val dayOfWeekFormat = SimpleDateFormat("EEE", Locale("RU"))
-    val yearFormat = SimpleDateFormat("yyyy", Locale("RU"))
 
     private var eventList = HashMap<String, MutableList<UsageEvents.Event>>()
     private var timeInPackage: Long = 0L
@@ -48,16 +39,25 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
     private val _stateUsagePermission: MutableLiveData<Boolean> = MutableLiveData()
     val stateUsagePermission: LiveData<Boolean> = _stateUsagePermission
 
-    private val _currentDate: MutableLiveData<HashMap<String, String>> = MutableLiveData()
+    private val _currentDate: MutableLiveData<HashMap<String, String>> = MutableLiveData(HashMap())
     val currentDate: LiveData<HashMap<String, String>> = _currentDate
+
+    private val _animateItem: MutableLiveData<Boolean> = MutableLiveData()
+    val animateItem: LiveData<Boolean> = _animateItem
 
     private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData()
     val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
     var timeUsedInfoBuffer = ArrayList<TimeUsed>() // временная переменная для динамического хранения списка
 
+    private val dayFormat = SimpleDateFormat("d", Locale("RU"))
+    private val monthFormat = SimpleDateFormat("MMMM", Locale("RU"))
+    private val dayOfWeekFormat = SimpleDateFormat("EEE", Locale("RU"))
+    private val yearFormat = SimpleDateFormat("yyyy", Locale("RU"))
+
     init {
         _timeUsedInfo.value = arrayListOf()
         _dateDialogIsVisible.value = false
+        _animateItem.value = true
 
         getDateSeparate(DEFAULT_DATE)
     }
@@ -68,10 +68,10 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         val dayOfWeek = dayOfWeekFormat.format(date)
         val year = yearFormat.format(date)
 
-        _currentDate.value?.set("day", day)
-        _currentDate.value?.set("month", month)
-        _currentDate.value?.set("dayOfWeek", dayOfWeek)
-        _currentDate.value?.set("year", year)
+        _currentDate.value?.put("day", day)
+        _currentDate.value?.put("month", month)
+        _currentDate.value?.put("dayOfWeek", dayOfWeek)
+        _currentDate.value?.put("year", year)
     }
 
     class Action(private var value: Int) {
@@ -253,9 +253,11 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
 
     fun closeDialog() {
         _dateDialogIsVisible.value = false
+        _animateItem.value = true
     }
 
     fun changeDateDialogVisible(isVisible: Boolean) {
         _dateDialogIsVisible.value = !isVisible
+        _animateItem.value = false
     }
 }
