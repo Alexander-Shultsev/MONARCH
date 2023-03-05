@@ -7,10 +7,13 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.monarch.module.TimeUsed
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -194,9 +197,13 @@ class TimeUsedViewModel(
         packageName: String
     ) {
         _stateUsagePermission.value = checkUsageStatsPermission(appOpsManager, packageName)
-        if (_stateUsagePermission.value!!) {
-            getStateUsageFromEvent(statsManager, DEFAULT_DATE)
-        } else {
+//        if (_stateUsagePermission.value!!) {
+//            getStateUsageFromEvent(statsManager, DEFAULT_DATE)
+//        } else {
+//            _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
+//        }
+
+        if (!_stateUsagePermission.value!!) { // если нет разрешений, дать их
             _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
         }
     }

@@ -61,8 +61,8 @@ fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
 
                 TextButton(
                     onClick = {
-                        onDateSelected(selDate.value)
                         closeDialog()
+                        onDateSelected(selDate.value)
                     }
                 ) {
                     //TODO - hardcode string

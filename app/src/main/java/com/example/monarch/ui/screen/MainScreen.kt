@@ -28,11 +28,11 @@ import com.example.monarch.ui.theme.*
 import com.example.monarch.viewmodel.TimeUsedViewModel
 import com.monarchcompany.monarchapp.R
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(
     statsManager: UsageStatsManager,
@@ -150,7 +150,6 @@ fun StateUsageScreen(
     val currentDate = viewModel.currentDate.observeAsState()
     val animateItem = viewModel.animateItem.observeAsState()
     val count = timeUsedInfo.value!!.size
-
 
 //    val timeUsedInfo = arrayListOf(
 //        TimeUsed(
