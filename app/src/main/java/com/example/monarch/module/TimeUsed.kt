@@ -2,13 +2,13 @@ package com.example.monarch.module
 
 class TimeUsed(
     private var packageName: String,
-    private var position: Int,
-    private var timeInForeground: Long
+    private var timeInForeground: Long,
+    private var applicationName: String
 ) {
 
     fun getPackageName(): String = packageName
     fun getTimeInForeground(): Long = timeInForeground
-    fun getPosition(): Int = position
+    fun getApplicationName(): String = applicationName
 
     fun setPackageName(packageName: String) {
         this.packageName = packageName
@@ -18,7 +18,7 @@ class TimeUsed(
         this.timeInForeground = timeInForeground
     }
 
-    fun setPosition(position: Int) {
-        this.position = position
+    fun setApplicationName(applicationName: String) {
+        this.applicationName = applicationName
     }
 }

@@ -3,24 +3,28 @@ package com.example.monarch.viewmodel
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
-import android.content.ContentValues.TAG
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.monarch.module.TimeUsed
 import java.text.SimpleDateFormat
-import java.time.ZonedDateTime
 import java.util.*
-import kotlin.collections.HashMap
 
-class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
+
+class TimeUsedViewModel(
+    val statsManager: UsageStatsManager,
+    val packageManager: PackageManager
+) : ViewModel() {
 
     companion object {
-        const val MINIMUM_GET_TIME: Long = 1000L // минимально собираемый промежуток времени одной сессии
+        const val MINIMUM_GET_TIME: Long =
+            1000L // минимально собираемый промежуток времени одной сессии
         var DEFAULT_DATE: Date = Date() // минимально собираемый промежуток времени одной сессии
+
         init {
             val formatter = SimpleDateFormat("MM-dd-yyyy", Locale("RU"))
             DEFAULT_DATE = formatter.parse(formatter.format(Date())) as Date
@@ -47,19 +51,36 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
 
     private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData()
     val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
-    var timeUsedInfoBuffer = ArrayList<TimeUsed>() // временная переменная для динамического хранения списка
+    var timeUsedInfoBuffer =
+        ArrayList<TimeUsed>() // временная переменная для динамического хранения информации о времени использования приложений
 
     private val dayFormat = SimpleDateFormat("d", Locale("RU"))
     private val monthFormat = SimpleDateFormat("MMMM", Locale("RU"))
     private val dayOfWeekFormat = SimpleDateFormat("EEE", Locale("RU"))
     private val yearFormat = SimpleDateFormat("yyyy", Locale("RU"))
 
+    private var packages: List<ApplicationInfo>
+
     init {
         _timeUsedInfo.value = arrayListOf()
         _dateDialogIsVisible.value = false
         _animateItem.value = true
+        packages = listOf()
 
         getDateSeparate(DEFAULT_DATE)
+        getPackageLabels()
+    }
+
+    private fun getPackageLabels() {
+        packages = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        } else {
+            packageManager.getInstalledApplications(
+                PackageManager.ApplicationInfoFlags.of(
+                    PackageManager.GET_META_DATA.toLong()
+                )
+            )
+        }
     }
 
     private fun getDateSeparate(date: Date) {
@@ -89,6 +110,7 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         }
     }
 
+
     fun getStateUsageFromEvent(
         statsManager: UsageStatsManager,
         date: Date
@@ -111,8 +133,6 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
             date.time,
             calendar.timeInMillis
         )
-
-        Log.i(TAG, "getStateUsageFromEvent: ${date.time}, ${calendar.timeInMillis}")
 
         // TODO объединить 2 цикла в 1
 
@@ -201,49 +221,84 @@ class TimeUsedViewModel(val statsManager: UsageStatsManager): ViewModel() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    private var applicationName: String = ""
+    private var findElem: Boolean = false
+
     private fun addInPackageAndSort(packageName: String, timeInForeground: Long): Boolean {
-        timeUsedInfoBuffer.add(
+        timeUsedInfoBuffer.add( // создание пустого элемента
             TimeUsed(
                 packageName = "",
-                position = 0,
-                timeInForeground = 0L
+                timeInForeground = 0L,
+                applicationName = ""
             )
         )
 
+        for (packageInfo in packages) { // нахождение имени приложения, соответсвующего имени пакета
+            val packageNameApplicationInfo = packageInfo.packageName
+
+            if (packageNameApplicationInfo == packageName) {
+                applicationName = packageInfo.loadLabel(packageManager).toString()
+            }
+        }
+
+        // определение позиции нового элемента в массиве
         if (timeUsedInfoBuffer.size > 1) {
-            var findElem = false
+            findElem = false
             for (currentPosition in 0 until timeUsedInfoBuffer.size - 1) {
-                if (timeInForeground > timeUsedInfoBuffer[currentPosition].getTimeInForeground()) {
+                if (timeInForeground > timeUsedInfoBuffer[currentPosition].getTimeInForeground()) { // если новое время больше перебираемого
                     var changeIndex = timeUsedInfoBuffer.size - 1
 
                     while (changeIndex > currentPosition) {
-                        timeUsedInfoBuffer[changeIndex].apply {
-                            this.setPackageName(timeUsedInfoBuffer[changeIndex - 1].getPackageName())
-                            this.setTimeInForeground(timeUsedInfoBuffer[changeIndex - 1].getTimeInForeground())
-                        }
+                        val changeIndexBefore = changeIndex - 1 // номер элемента, куда переноситься текущий
+                        createTimeUsed(
+                            packageName = timeUsedInfoBuffer[changeIndexBefore].getPackageName(),
+                            timeInForeground = timeUsedInfoBuffer[changeIndexBefore].getTimeInForeground(),
+                            applicationName = timeUsedInfoBuffer[changeIndexBefore].getApplicationName(),
+                            position = changeIndex
+                        )
+
                         changeIndex--
                     }
 
-                    timeUsedInfoBuffer[currentPosition].setPackageName(packageName)
-                    timeUsedInfoBuffer[currentPosition].setTimeInForeground(timeInForeground)
+                    createTimeUsed(
+                        packageName = packageName,
+                        timeInForeground = timeInForeground,
+                        applicationName = applicationName,
+                        position = currentPosition
+                    )
                     findElem = true
                     return true
                 }
             }
 
-            if (!findElem) {
-                timeUsedInfoBuffer[timeUsedInfoBuffer.size - 1].apply {
-                    this.setPackageName(packageName)
-                    this.setTimeInForeground(timeInForeground)
-                }
+            if (!findElem) { // если элемент не найден, добавить его в конец массива
+                createTimeUsed(
+                    packageName = packageName,
+                    timeInForeground = timeInForeground,
+                    applicationName = applicationName,
+                    position = timeUsedInfoBuffer.size - 1
+                )
             }
         } else {
-            timeUsedInfoBuffer[0].apply {
-                this.setPackageName(packageName)
-                this.setTimeInForeground(timeInForeground)
-            }
+            createTimeUsed(
+                packageName = packageName,
+                timeInForeground = timeInForeground,
+                applicationName = applicationName,
+                position = 0
+            )
         }
         return true
+    }
+
+    private fun createTimeUsed(
+        packageName: String,
+        timeInForeground: Long,
+        applicationName: String,
+        position: Int
+    ) {
+        timeUsedInfoBuffer[position].setPackageName(packageName)
+        timeUsedInfoBuffer[position].setTimeInForeground(timeInForeground)
+        timeUsedInfoBuffer[position].setApplicationName(applicationName)
     }
 
     fun onDateSelected(date: Date) {

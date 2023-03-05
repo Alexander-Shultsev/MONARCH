@@ -6,6 +6,7 @@ import android.app.usage.UsageStatsManager
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var appOpsManager: AppOpsManager
     private lateinit var viewModel: TimeUsedViewModel
     private lateinit var activity: Activity
+    private lateinit var packageManager: PackageManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +45,8 @@ class MainActivity : ComponentActivity() {
     private fun init() {
         statsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         appOpsManager = getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager
-        viewModel = TimeUsedViewModel(statsManager)
+        packageManager = getPackageManager()
+        viewModel = TimeUsedViewModel(statsManager, packageManager)
         activity = this
     }
 
@@ -67,7 +70,7 @@ class MainActivity : ComponentActivity() {
                         statsManager,
                         appOpsManager,
                         packageName,
-                        viewModel,
+                        viewModel
                     )
                 }
             }

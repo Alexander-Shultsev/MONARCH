@@ -222,7 +222,7 @@ fun StateUsageScreen(
                                         .fillMaxWidth()
                                 ) {
                                     H5(
-                                        text = timeUsedInfo.value!![elem].getPackageName(),
+                                        text = timeUsedInfo.value!![elem].getApplicationName(),
                                         modifier = Modifier.padding(bottom = 2.dp),
                                         color = MaterialTheme.colors.primary
                                     )
