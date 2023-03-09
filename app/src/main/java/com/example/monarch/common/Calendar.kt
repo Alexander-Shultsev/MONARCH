@@ -1,5 +1,7 @@
 package com.example.monarch.common
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.widget.CalendarView
 import androidx.compose.foundation.background
@@ -12,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
@@ -22,13 +26,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
-    val formatter = SimpleDateFormat("dd.MM.yyyy")
-    val date = formatter.parse("01.01.2023")
+fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit, currentDate: Long) {
+    val setDate = remember { mutableStateOf(Date(currentDate)) }
 
-    val selDate = remember { mutableStateOf(date) }
 
-    //todo - add strings to resource after POC
     Dialog(onDismissRequest = { closeDialog() }, properties = DialogProperties()) {
         Column(
             modifier = Modifier
@@ -38,9 +39,13 @@ fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
                     shape = RoundedCornerShape(size = 16.dp)
                 )
         ) {
-            CustomCalendarView(onDateSelected = {
-                selDate.value = it
-            })
+            CustomCalendarView(
+                onDateSelected = {
+                    setDate.value = it
+                    Log.i(TAG, "DatePicker: $it")
+                },
+                currentDate
+            )
 
             Spacer(modifier = Modifier.size(8.dp))
 
@@ -62,7 +67,7 @@ fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
                 TextButton(
                     onClick = {
                         closeDialog()
-                        onDateSelected(selDate.value)
+                        onDateSelected(setDate.value)
                     }
                 ) {
                     //TODO - hardcode string
@@ -78,21 +83,21 @@ fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit) {
 }
 
 @Composable
-private fun CustomCalendarView(onDateSelected: (Date) -> Unit) {
-    // Adds view to Compose
+private fun CustomCalendarView(onDateSelected: (Date) -> Unit, currentDate: Long) {
     AndroidView(
         modifier = Modifier.wrapContentSize(),
         factory = { context ->
-            CalendarView(ContextThemeWrapper(context, R.style.Theme_Monarch))
+            CalendarView(ContextThemeWrapper(context, R.style.Theme_DatePicker))
         },
         update = { view ->
             val formatter = SimpleDateFormat("dd.MM.yyyy", Locale("RU"))
-            val minDate = formatter.parse("01.01.1970").time
+            val minDate = formatter.parse("01.01.1970")!!.time
             val maxDate = Calendar.getInstance().timeInMillis
 
             view.minDate = minDate
             view.maxDate = maxDate
             view.firstDayOfWeek = Calendar.MONDAY // понедельник - первый день недели
+            view.date = currentDate
 
             view.setOnDateChangeListener { _, year, month, dayOfMonth ->
                 val dateString = "$dayOfMonth.${month + 1}.$year"

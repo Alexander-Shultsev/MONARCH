@@ -8,7 +8,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -16,8 +15,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -27,10 +24,7 @@ import com.example.monarch.ui.*
 import com.example.monarch.ui.theme.*
 import com.example.monarch.viewmodel.TimeUsedViewModel
 import com.monarchcompany.monarchapp.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 @Composable
@@ -147,7 +141,7 @@ fun StateUsageScreen(
 ) {
     val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
     val timeUsedInfo = viewModel.timeUsedInfo.observeAsState()
-    val currentDate = viewModel.currentDate.observeAsState()
+    val currentDate = viewModel.currentDateString.observeAsState()
     val animateItem = viewModel.animateItem.observeAsState()
     val count = timeUsedInfo.value!!.size
 
@@ -269,10 +263,10 @@ fun StateUsageScreen(
     }
 
     if (dateDialogIsVisible.value) {
-        DatePicker({
-            viewModel.onDateSelected(it)
-        }, {
-            viewModel.closeDialog()
-        })
+        DatePicker(
+            { viewModel.onDateSelected(it) },
+            { viewModel.closeDialog() },
+            viewModel.currentDate.time
+        )
     }
 }

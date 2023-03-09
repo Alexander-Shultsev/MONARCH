@@ -3,6 +3,10 @@
 
     <style name="Theme.Monarch" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@color/main</item>
+    </style>
+
+    <style name="Theme.DatePicker" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:textColor">@color/black</item>
         <item name="android:colorAccent">@color/main</item>
     </style>
 

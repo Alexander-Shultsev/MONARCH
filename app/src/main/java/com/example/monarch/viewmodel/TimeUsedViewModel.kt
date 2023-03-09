@@ -3,17 +3,16 @@ package com.example.monarch.viewmodel
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
+import android.content.ContentValues.TAG
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
-import androidx.compose.runtime.LaunchedEffect
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.monarch.module.TimeUsed
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,8 +45,10 @@ class TimeUsedViewModel(
     private val _stateUsagePermission: MutableLiveData<Boolean> = MutableLiveData()
     val stateUsagePermission: LiveData<Boolean> = _stateUsagePermission
 
-    private val _currentDate: MutableLiveData<HashMap<String, String>> = MutableLiveData(HashMap())
-    val currentDate: LiveData<HashMap<String, String>> = _currentDate
+    var currentDate: Date
+
+    private val _currentDateString: MutableLiveData<HashMap<String, String>> = MutableLiveData(HashMap())
+    val currentDateString: LiveData<HashMap<String, String>> = _currentDateString
 
     private val _animateItem: MutableLiveData<Boolean> = MutableLiveData()
     val animateItem: LiveData<Boolean> = _animateItem
@@ -69,6 +70,7 @@ class TimeUsedViewModel(
         _dateDialogIsVisible.value = false
         _animateItem.value = true
         packages = listOf()
+        currentDate = DEFAULT_DATE
 
         getDateSeparate(DEFAULT_DATE)
         getPackageLabels()
@@ -92,10 +94,10 @@ class TimeUsedViewModel(
         val dayOfWeek = dayOfWeekFormat.format(date)
         val year = yearFormat.format(date)
 
-        _currentDate.value?.put("day", day)
-        _currentDate.value?.put("month", month)
-        _currentDate.value?.put("dayOfWeek", dayOfWeek)
-        _currentDate.value?.put("year", year)
+        _currentDateString.value?.put("day", day)
+        _currentDateString.value?.put("month", month)
+        _currentDateString.value?.put("dayOfWeek", dayOfWeek)
+        _currentDateString.value?.put("year", year)
     }
 
     class Action(private var value: Int) {
@@ -311,6 +313,7 @@ class TimeUsedViewModel(
     fun onDateSelected(date: Date) {
         getStateUsageFromEvent(statsManager, date)
         getDateSeparate(date)
+        currentDate = date
     }
 
     fun closeDialog() {

@@ -18,12 +18,6 @@ val LightColorPalette = lightColors(
     onPrimary = Color.White,
     secondary = Orange,
     surface = Color.White, // date time picker background
-    error = Red,
-    onSurface = Purple
+    onSurface = Purple, // date time picker background
+    error = Red
 )
-
-fun color(
-
-) {
-
-}
