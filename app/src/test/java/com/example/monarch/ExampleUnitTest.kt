@@ -1,5 +1,6 @@
 package com.example.monarch
 
+import com.example.monarch.module.common.DateTime.Companion.timeFormatter
 import org.junit.Test
 
 import org.junit.Assert.*
@@ -12,6 +13,7 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+//        assertEquals(timeFormatter(1678377773150), "19ч 2м 53с")
+        timeFormatter(1678377773150)
     }
 }

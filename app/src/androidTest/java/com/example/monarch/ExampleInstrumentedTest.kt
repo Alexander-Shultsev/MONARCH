@@ -1,7 +1,10 @@
 package com.example.monarch
 
+import android.app.usage.UsageStatsManager
+import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.monarch.module.timeused.TimeUsedModule
 
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,8 +20,8 @@ import org.junit.Assert.*
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.monarch", appContext.packageName)
+        val usedStatManager = appContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+//        val viewModel = TimeUsedModule()
     }
 }

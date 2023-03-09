@@ -1,22 +1,13 @@
-package com.example.monarch.common
+package com.example.monarch.module.common
 
 import java.text.SimpleDateFormat
 import java.util.*
 
 class DateTime {
     companion object {
-        fun getDate(milliSeconds: Long): String? {
-            // Create a DateFormatter object for displaying date in specified format.
-            val dateFormat = "dd/MM/yyyy HH:mm:ss.SSS"
-            val formatter = SimpleDateFormat(dateFormat, Locale.forLanguageTag("RU"))
 
-            // Create a calendar object that will convert the date and time value in milliseconds to date.
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = milliSeconds
-            return formatter.format(calendar.time)
-        }
-
-        fun getTime(milliSeconds: Long): String {
+        // millisecond to ##ч ##м ##с
+        fun timeFormatter(milliSeconds: Long): String { 
             val secondTotal = milliSeconds / 1000
             val minuteTotal = secondTotal / 60
             val hourTotal = minuteTotal / 60

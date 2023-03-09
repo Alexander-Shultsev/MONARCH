@@ -2,8 +2,6 @@ package com.example.monarch.ui.screen
 
 
 import android.annotation.SuppressLint
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -18,41 +16,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import com.example.monarch.common.DatePicker
-import com.example.monarch.common.DateTime
+import com.example.monarch.module.common.DatePicker
+import com.example.monarch.module.common.DateTime
 import com.example.monarch.ui.*
 import com.example.monarch.ui.theme.*
-import com.example.monarch.viewmodel.TimeUsedViewModel
+import com.example.monarch.module.timeused.TimeUsedModule
 import com.monarchcompany.monarchapp.R
 import java.util.*
 
 
 @Composable
 fun MainScreen(
-    statsManager: UsageStatsManager,
-    appOpsManager: AppOpsManager,
-    packageName: String,
-    viewModel: TimeUsedViewModel
+    viewModel: TimeUsedModule
 ) {
-    val currentUsageStatsPermission = viewModel.checkUsageStatsPermission(
-        appOpsManager,
-        packageName
-    )
+    val currentUsageStatsPermission = viewModel.checkUsageStatsPermission()
+
     val stateUsagePermissionGranted =
         viewModel.stateUsagePermission.observeAsState(currentUsageStatsPermission)
 
     if (stateUsagePermissionGranted.value) {
         viewModel.getStateUsageFromEvent(
-            statsManager,
-            TimeUsedViewModel.DEFAULT_DATE
+            TimeUsedModule.DEFAULT_DATE
         )
-        StateUsageScreen(viewModel, statsManager)
+        StateUsageScreen(viewModel)
     } else {
         RequestPermissionGetStateUsageScreen(
-            viewModel,
-            statsManager,
-            appOpsManager,
-            packageName
+            viewModel
         )
     }
 }
@@ -72,10 +61,7 @@ fun MainScreen(
 
 @Composable
 fun RequestPermissionGetStateUsageScreen(
-    viewModel: TimeUsedViewModel,
-    statsManager: UsageStatsManager,
-    appOpsManager: AppOpsManager,
-    packageName: String
+    viewModel: TimeUsedModule
 ) {
     Column(
         Modifier.fillMaxSize(),
@@ -120,7 +106,7 @@ fun RequestPermissionGetStateUsageScreen(
                     )
                     .background(MaterialTheme.colors.onPrimary)
                     .clickable {
-                        viewModel.isUsageStatsPermission(statsManager, appOpsManager, packageName)
+                        viewModel.isUsageStatsPermission()
                     }
                     .padding(vertical = 16.dp, horizontal = 40.dp),
             ) {
@@ -136,8 +122,7 @@ fun RequestPermissionGetStateUsageScreen(
 @SuppressLint("MutableCollectionMutableState")
 @Composable
 fun StateUsageScreen(
-    viewModel: TimeUsedViewModel,
-    statsManager: UsageStatsManager
+    viewModel: TimeUsedModule
 ) {
     val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
     val timeUsedInfo = viewModel.timeUsedInfo.observeAsState()
@@ -221,7 +206,7 @@ fun StateUsageScreen(
                                     )
 
                                     H6(
-                                        text = DateTime.getTime(timeUsedInfo.value!![elem].getTimeInForeground()),
+                                        text = DateTime.timeFormatter(timeUsedInfo.value!![elem].getTimeInForeground()),
                                         modifier = Modifier
                                             .fillMaxWidth(),
                                         color = MaterialTheme.colors.primary

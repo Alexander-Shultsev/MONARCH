@@ -1,4 +1,4 @@
-package com.example.monarch.module
+package com.example.monarch.module.timeused.data
 
 class TimeUsed(
     private var packageName: String,

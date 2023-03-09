@@ -1,26 +1,24 @@
-package com.example.monarch.viewmodel
+package com.example.monarch.module.timeused
 
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
-import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
-import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.monarch.module.TimeUsed
+import com.example.monarch.module.common.App.Companion.getContextInstanse
+import com.example.monarch.module.timeused.data.TimeUsed
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class TimeUsedViewModel(
-    val statsManager: UsageStatsManager,
-    val packageManager: PackageManager
-) : ViewModel() {
+class TimeUsedModule : ViewModel() {
 
     companion object {
         const val MINIMUM_GET_TIME: Long =
@@ -32,6 +30,14 @@ class TimeUsedViewModel(
             DEFAULT_DATE = formatter.parse(formatter.format(Date())) as Date
         }
     }
+
+    private var statsManager: UsageStatsManager =
+        getContextInstanse().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+
+    private var appOpsManager: AppOpsManager =
+        getContextInstanse().getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager
+
+    private var packageManager: PackageManager = getContextInstanse().packageManager
 
     private var eventList = HashMap<String, MutableList<UsageEvents.Event>>()
     private var timeInPackage: Long = 0L
@@ -117,7 +123,6 @@ class TimeUsedViewModel(
 
 
     fun getStateUsageFromEvent(
-        statsManager: UsageStatsManager,
         date: Date
     ) {
         eventList = HashMap()
@@ -193,38 +198,28 @@ class TimeUsedViewModel(
         _stateUsagePermission.value = true
     }
 
-    fun isUsageStatsPermission(
-        statsManager: UsageStatsManager,
-        appOpsManager: AppOpsManager,
-        packageName: String
-    ) {
-        _stateUsagePermission.value = checkUsageStatsPermission(appOpsManager, packageName)
-//        if (_stateUsagePermission.value!!) {
-//            getStateUsageFromEvent(statsManager, DEFAULT_DATE)
-//        } else {
-//            _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
-//        }
+    fun isUsageStatsPermission() {
+        _stateUsagePermission.value = checkUsageStatsPermission()
 
         if (!_stateUsagePermission.value!!) { // если нет разрешений, дать их
             _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
         }
     }
 
-    fun checkUsageStatsPermission(
-        appOpsManager: AppOpsManager,
-        packageName: String
-    ): Boolean {
+    fun checkUsageStatsPermission(): Boolean {
+        val context = getContextInstanse()
+
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // android-sdk => 29
             appOpsManager.unsafeCheckOpNoThrow(
                 "android:get_usage_stats",
                 Process.myUid(),
-                packageName
+                context.packageName
             )
         } else {
             appOpsManager.checkOpNoThrow( // android-sdk < 29
                 "android:get_usage_stats",
                 Process.myUid(),
-                packageName
+                context.packageName
             )
         }
         return mode == AppOpsManager.MODE_ALLOWED
@@ -311,7 +306,7 @@ class TimeUsedViewModel(
     }
 
     fun onDateSelected(date: Date) {
-        getStateUsageFromEvent(statsManager, date)
+        getStateUsageFromEvent(date)
         getDateSeparate(date)
         currentDate = date
     }
