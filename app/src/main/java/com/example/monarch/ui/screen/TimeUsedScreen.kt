@@ -2,7 +2,6 @@ package com.example.monarch.ui.screen
 
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +17,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.monarch.module.common.DatePicker
 import com.example.monarch.module.common.DateTime
+import com.example.monarch.module.common.DateTime.Companion.getDateString
 import com.example.monarch.ui.*
 import com.example.monarch.ui.theme.*
 import com.example.monarch.module.timeused.TimeUsedModule
@@ -29,15 +29,9 @@ import java.util.*
 fun MainScreen(
     viewModel: TimeUsedModule
 ) {
-    val currentUsageStatsPermission = viewModel.checkUsageStatsPermission()
+    val stateUsagePermissionGranted = viewModel.stateUsagePermission.observeAsState()
 
-    val stateUsagePermissionGranted =
-        viewModel.stateUsagePermission.observeAsState(currentUsageStatsPermission)
-
-    if (stateUsagePermissionGranted.value) {
-        viewModel.getStateUsageFromEvent(
-            TimeUsedModule.DEFAULT_DATE
-        )
+    if (stateUsagePermissionGranted.value!!) {
         StateUsageScreen(viewModel)
     } else {
         RequestPermissionGetStateUsageScreen(
@@ -126,9 +120,7 @@ fun StateUsageScreen(
 ) {
     val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
     val timeUsedInfo = viewModel.timeUsedInfo.observeAsState()
-    val currentDate = viewModel.currentDateString.observeAsState()
-    val animateItem = viewModel.animateItem.observeAsState()
-    val count = timeUsedInfo.value!!.size
+    val currentDate = viewModel.currentDate.observeAsState()
 
 //    val timeUsedInfo = arrayListOf(
 //        TimeUsed(
@@ -158,68 +150,57 @@ fun StateUsageScreen(
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.Center
         ) {
-            currentDate.value?.get("day")?.let { day ->
-                currentDate.value?.get("month")?.let { month ->
-                    currentDate.value?.get("year")?.let { year ->
-                        Title1(
-                            text = "$day $month $year",
-                            color = MaterialTheme.colors.onPrimary,
-                        )
-                    }
-                }
-            }
+            val dateString = getDateString(currentDate.value!!)
 
-            currentDate.value?.get("dayOfWeek")?.let { dayOfWeek ->
-                Title1(
-                    text = dayOfWeek,
-                    color = onPrimaryMedium,
-                    modifier = Modifier.padding(start = 7.dp)
-                )
-            }
+            Title1(
+                text = "${dateString.day} ${dateString.month} ${dateString.year}",
+                color = MaterialTheme.colors.onPrimary,
+            )
+
+            Title1(
+                text = dateString.dayOfWeek,
+                color = onPrimaryMedium,
+                modifier = Modifier.padding(start = 7.dp)
+            )
         }
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
-            content = {
-                item {
-                    for (elem in 0 until count) {
-                        AnimatedVisibility(
-                            visible = animateItem.value!!
+                .fillMaxSize()
+        ) {
+            item {
+                for (elem in timeUsedInfo.value!!) {
+                    Column(
+                        modifier = Modifier
+                            .background(MaterialTheme.colors.secondary)
+                            .fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(
+                                    horizontal = 10.dp,
+                                    vertical = 6.dp
+                                )
+                                .fillMaxWidth()
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .background(MaterialTheme.colors.secondary)
-                                    .fillMaxWidth(),
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .padding(
-                                            horizontal = 10.dp,
-                                            vertical = 6.dp
-                                        )
-                                        .fillMaxWidth()
-                                ) {
-                                    H5(
-                                        text = timeUsedInfo.value!![elem].getApplicationName(),
-                                        modifier = Modifier.padding(bottom = 2.dp),
-                                        color = MaterialTheme.colors.primary
-                                    )
+                            H5(
+                                text = elem.getApplicationName(),
+                                modifier = Modifier.padding(bottom = 2.dp),
+                                color = MaterialTheme.colors.primary
+                            )
 
-                                    H6(
-                                        text = DateTime.timeFormatter(timeUsedInfo.value!![elem].getTimeInForeground()),
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        color = MaterialTheme.colors.primary
-                                    )
-                                }
-                            }
+                            H6(
+                                text = DateTime.timeFormatter(elem.getTimeInForeground()),
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                color = MaterialTheme.colors.primary
+                            )
                         }
-                        Spacer(modifier = Modifier.height(5.dp))
                     }
-                    Spacer(modifier = Modifier.height(90.dp))
+                    Spacer(modifier = Modifier.height(5.dp))
                 }
+                Spacer(modifier = Modifier.height(90.dp))
             }
-        )
+        }
     }
 
     Column(
@@ -250,8 +231,8 @@ fun StateUsageScreen(
     if (dateDialogIsVisible.value) {
         DatePicker(
             { viewModel.onDateSelected(it) },
-            { viewModel.closeDialog() },
-            viewModel.currentDate.time
+            { viewModel.changeDateDialogVisible(dateDialogIsVisible.value) },
+            currentDate.value!!.time
         )
     }
 }

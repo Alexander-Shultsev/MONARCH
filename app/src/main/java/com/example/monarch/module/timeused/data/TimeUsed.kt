@@ -1,5 +1,8 @@
 package com.example.monarch.module.timeused.data
-
+/*
+    Класс хранения данных о времени использования приложения
+    на устройстве
+*/
 class TimeUsed(
     private var packageName: String,
     private var timeInForeground: Long,

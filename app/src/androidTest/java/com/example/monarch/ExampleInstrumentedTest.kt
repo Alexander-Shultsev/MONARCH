@@ -4,12 +4,15 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.monarch.module.common.App
 import com.example.monarch.module.timeused.TimeUsedModule
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import java.text.SimpleDateFormat
+import java.util.logging.SimpleFormatter
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -20,8 +23,12 @@ import org.junit.Assert.*
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        val usedStatManager = appContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-//        val viewModel = TimeUsedModule()
+        val viewModel = TimeUsedModule()
+
+        val date = SimpleDateFormat("dd-MM-yyyy").parse("10-03-2023")
+        val statsManager: UsageStatsManager =
+            App.getContextInstanse().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+
+        viewModel.getStateUsageFromEvent(date!!, statsManager)
     }
 }

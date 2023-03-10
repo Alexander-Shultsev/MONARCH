@@ -8,80 +8,70 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
+import android.text.format.Time
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.monarch.module.common.App.Companion.getContextInstanse
+import com.example.monarch.module.timeused.data.Constant.Companion.CURRENT_DATE
+import com.example.monarch.module.timeused.data.Constant.Companion.MINIMUM_GET_TIME
 import com.example.monarch.module.timeused.data.TimeUsed
-import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.reflect.KMutableProperty0
 
 
 class TimeUsedModule : ViewModel() {
 
-    companion object {
-        const val MINIMUM_GET_TIME: Long =
-            1000L // минимально собираемый промежуток времени одной сессии
-        var DEFAULT_DATE: Date = Date() // минимально собираемый промежуток времени одной сессии
-
-        init {
-            val formatter = SimpleDateFormat("MM-dd-yyyy", Locale("RU"))
-            DEFAULT_DATE = formatter.parse(formatter.format(Date())) as Date
-        }
-    }
-
-    private var statsManager: UsageStatsManager =
+    // статистика использования приложений
+    private val statsManager: UsageStatsManager =
         getContextInstanse().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
-    private var appOpsManager: AppOpsManager =
+    // проверка выдачи разрешения на получение статистики использования приложений
+    private val appOpsManager: AppOpsManager =
         getContextInstanse().getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager
 
-    private var packageManager: PackageManager = getContextInstanse().packageManager
+    // получения информации об установленных приложениях
+    private val packageManager: PackageManager = getContextInstanse().packageManager
 
-    private var eventList = HashMap<String, MutableList<UsageEvents.Event>>()
-    private var timeInPackage: Long = 0L
-
+    // вызываемое событие (переход на экран запроса разрешения)
     private val _action: MutableLiveData<Action> = MutableLiveData()
     val action: LiveData<Action> = _action
 
+    // отображение диалогового окна
     private val _dateDialogIsVisible: MutableLiveData<Boolean> = MutableLiveData()
     val dateDialogIsVisible: LiveData<Boolean> = _dateDialogIsVisible
 
+    // выдача разрешения на сбор статистики
     private val _stateUsagePermission: MutableLiveData<Boolean> = MutableLiveData()
     val stateUsagePermission: LiveData<Boolean> = _stateUsagePermission
 
-    var currentDate: Date
+    // выбранная дата
+    private val _currentDate: MutableLiveData<Date> = MutableLiveData()
+    val currentDate: LiveData<Date> = _currentDate
 
-    private val _currentDateString: MutableLiveData<HashMap<String, String>> = MutableLiveData(HashMap())
-    val currentDateString: LiveData<HashMap<String, String>> = _currentDateString
-
-    private val _animateItem: MutableLiveData<Boolean> = MutableLiveData()
-    val animateItem: LiveData<Boolean> = _animateItem
-
-    private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData()
+    // список TimeUsed
+    private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData(arrayListOf())
     val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
-    var timeUsedInfoBuffer =
-        ArrayList<TimeUsed>() // временная переменная для динамического хранения информации о времени использования приложений
 
-    private val dayFormat = SimpleDateFormat("d", Locale("RU"))
-    private val monthFormat = SimpleDateFormat("MMMM", Locale("RU"))
-    private val dayOfWeekFormat = SimpleDateFormat("EEE", Locale("RU"))
-    private val yearFormat = SimpleDateFormat("yyyy", Locale("RU"))
+    // список установленных покетов
+    private var packages: List<ApplicationInfo> = listOf()
 
-    private var packages: List<ApplicationInfo>
+    private var applicationName: String = ""
+    private var findElem: Boolean = false
 
     init {
-        _timeUsedInfo.value = arrayListOf()
+        _currentDate.value = CURRENT_DATE
         _dateDialogIsVisible.value = false
-        _animateItem.value = true
-        packages = listOf()
-        currentDate = DEFAULT_DATE
+        _stateUsagePermission.value = checkUsageStatsPermission()
+        _timeUsedInfo.value = getStateUsageFromEvent(CURRENT_DATE, statsManager)
 
-        getDateSeparate(DEFAULT_DATE)
         getPackageLabels()
     }
 
+    // получить названия всех установленных приложений на устройстве
     private fun getPackageLabels() {
         packages = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -94,110 +84,25 @@ class TimeUsedModule : ViewModel() {
         }
     }
 
-    private fun getDateSeparate(date: Date) {
-        val day = dayFormat.format(date)
-        val month = monthFormat.format(date)
-        val dayOfWeek = dayOfWeekFormat.format(date)
-        val year = yearFormat.format(date)
-
-        _currentDateString.value?.put("day", day)
-        _currentDateString.value?.put("month", month)
-        _currentDateString.value?.put("dayOfWeek", dayOfWeek)
-        _currentDateString.value?.put("year", year)
-    }
-
+    // события от приложения
     class Action(private var value: Int) {
         companion object {
             const val QUERY_PERMISSION_STATE_USED = 0
-            const val TOAST = 1
         }
 
-        fun getValue(): Int {
-            return value
-        }
+        fun getValue(): Int = value
 
         fun setValue(value: Int) {
             this.value = value
         }
     }
 
-
-    fun getStateUsageFromEvent(
-        date: Date
-    ) {
-        eventList = HashMap()
-        timeUsedInfoBuffer = arrayListOf()
-        var currentEvent: UsageEvents.Event
-
-        val calendar = Calendar.getInstance()
-        calendar.time = date
-        calendar.add(Calendar.HOUR, 23)
-        calendar.add(Calendar.MINUTE, 59)
-        calendar.add(Calendar.SECOND, 59)
-
-//        val parser = SimpleDateFormat("dd.MM.yyyy'T'HH:mm:ss", Locale("RU"))
-//        val startTime = parser.parse("${date}T00:00:00")?.time ?: 0
-//        val endTime = parser.parse("${date}T23:59:59")?.time ?: 0
-
-        val statsEvent = statsManager.queryEvents(
-            date.time,
-            calendar.timeInMillis
-        )
-
-        // TODO объединить 2 цикла в 1
-
-        while (statsEvent.hasNextEvent()) {
-            currentEvent = UsageEvents.Event()
-            statsEvent.getNextEvent(currentEvent)
-            if (currentEvent.eventType == 1 ||
-                currentEvent.eventType == 2
-            ) {
-                val key = currentEvent.packageName
-                if (eventList[key] == null) { // check package is not in map
-                    eventList[key] = mutableListOf()
-                }
-                eventList[key]!!.add(currentEvent)
-            }
-        }
-
-
-        // перебор всех пакетов с группой событий
-        for (elem in eventList) {
-            val elemEventsCount = elem.value.size
-            if (elemEventsCount > 1) {
-                val packageName = elem.key
-                timeInPackage = 0
-
-                // перебор всех событий в пакете
-                for (event in 0 until elemEventsCount - 1) {
-                    val event0 = elem.value[event]
-                    val event1 = elem.value[event + 1]
-
-                    if (event0.eventType == UsageEvents.Event.ACTIVITY_RESUMED
-                        && event1.eventType == UsageEvents.Event.ACTIVITY_PAUSED
-                    ) {
-                        val timeInForeground: Long = event1.timeStamp - event0.timeStamp
-                        timeInPackage += timeInForeground
-                    }
-                }
-                if (timeInPackage >= MINIMUM_GET_TIME) {
-                    addInPackageAndSort(packageName, timeInPackage)
-                }
-            }
-        }
-
-        _timeUsedInfo.value = timeUsedInfoBuffer
-    }
-
-
-    // --------------------------------------------------
-    // Выдача разрешение на сбор данных об использовании устройства
-    // --------------------------------------------------
-
+    // выдача разрешение на сбор данных об использовании устройства
     fun setGrantedUsageStatsPermission() {
         _stateUsagePermission.value = true
     }
 
+    // запуск запроса на разрешение при его отсутствии
     fun isUsageStatsPermission() {
         _stateUsagePermission.value = checkUsageStatsPermission()
 
@@ -206,7 +111,8 @@ class TimeUsedModule : ViewModel() {
         }
     }
 
-    fun checkUsageStatsPermission(): Boolean {
+    // проверка наличия разрешения
+    private fun checkUsageStatsPermission(): Boolean {
         val context = getContextInstanse()
 
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // android-sdk => 29
@@ -225,10 +131,81 @@ class TimeUsedModule : ViewModel() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    private var applicationName: String = ""
-    private var findElem: Boolean = false
+    // получить статистику за день
+    fun getStateUsageFromEvent(
+        startTime: Date,
+        statsManager: UsageStatsManager
+    ): ArrayList<TimeUsed> {
+        // обнуление данных
+        val eventList = HashMap<String, MutableList<UsageEvents.Event>>()
+        val endTime = Calendar.getInstance()
+        var currentEvent: UsageEvents.Event
+        val timeUsedInfoBuffer = ArrayList<TimeUsed>()
 
-    private fun addInPackageAndSort(packageName: String, timeInForeground: Long): Boolean {
+        endTime.time = startTime
+        endTime.add(Calendar.DAY_OF_MONTH, 1)
+
+        // получение событий статистики использования
+        val statsEvent = statsManager.queryEvents(
+            startTime.time,
+            endTime.timeInMillis
+        )
+
+        // TODO объединить 2 цикла в 1
+
+        // распределение событий по пакетам
+        while (statsEvent.hasNextEvent()) {
+            currentEvent = UsageEvents.Event()
+            statsEvent.getNextEvent(currentEvent)
+
+            if (currentEvent.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
+                currentEvent.eventType == UsageEvents.Event.ACTIVITY_PAUSED
+            ) {
+                val key = currentEvent.packageName
+                if (eventList[key] == null) { // если пакет не существует
+                    eventList[key] = mutableListOf() // создать пустой пакет
+                }
+                eventList[key]!!.add(currentEvent)
+            }
+        }
+
+        // перебор всех совокупностей событий в пакетах
+        for (elem in eventList) {
+            val elemEventsCount = elem.value.size
+            val packageName = elem.key
+            var timeInPackage: Long = 0 // время использования устройства в миллисекундах
+
+            // перебор всех событий в пакете
+            for (event in 0 until elemEventsCount - 1) {
+                val event0 = elem.value[event]
+                val event1 = elem.value[event + 1]
+
+                if (event0.eventType == UsageEvents.Event.ACTIVITY_RESUMED
+                    && event1.eventType == UsageEvents.Event.ACTIVITY_PAUSED
+                ) {
+                    val timeInForeground: Long = event1.timeStamp - event0.timeStamp
+                    timeInPackage += timeInForeground
+                }
+            }
+            if (timeInPackage >= MINIMUM_GET_TIME) {
+                addInPackageAndSort(
+                    packageName,
+                    timeInPackage,
+                    timeUsedInfoBuffer,
+                    packages
+                )
+            }
+        }
+
+        return timeUsedInfoBuffer
+    }
+
+    // добавление информации о времени использования приложения в массив
+    private fun addInPackageAndSort(
+        packageName: String, timeInForeground: Long,
+        timeUsedInfoBuffer: ArrayList<TimeUsed>,
+        packages: List<ApplicationInfo>
+    ) {
         timeUsedInfoBuffer.add( // создание пустого элемента
             TimeUsed(
                 packageName = "",
@@ -237,7 +214,7 @@ class TimeUsedModule : ViewModel() {
             )
         )
 
-        for (packageInfo in packages) { // нахождение имени приложения, соответсвующего имени пакета
+        for (packageInfo in packages) { // нахождение имени приложения, соответствующего имени пакета
             val packageNameApplicationInfo = packageInfo.packageName
 
             if (packageNameApplicationInfo == packageName) {
@@ -254,70 +231,54 @@ class TimeUsedModule : ViewModel() {
 
                     while (changeIndex > currentPosition) {
                         val changeIndexBefore = changeIndex - 1 // номер элемента, куда переноситься текущий
-                        createTimeUsed(
+
+                        timeUsedInfoBuffer[changeIndex] = TimeUsed(
                             packageName = timeUsedInfoBuffer[changeIndexBefore].getPackageName(),
                             timeInForeground = timeUsedInfoBuffer[changeIndexBefore].getTimeInForeground(),
                             applicationName = timeUsedInfoBuffer[changeIndexBefore].getApplicationName(),
-                            position = changeIndex
                         )
 
                         changeIndex--
                     }
 
-                    createTimeUsed(
+                    timeUsedInfoBuffer[currentPosition] = TimeUsed(
                         packageName = packageName,
                         timeInForeground = timeInForeground,
                         applicationName = applicationName,
-                        position = currentPosition
                     )
+
                     findElem = true
-                    return true
+                    return
                 }
             }
 
             if (!findElem) { // если элемент не найден, добавить его в конец массива
-                createTimeUsed(
+                val position = timeUsedInfoBuffer.size - 1
+
+                timeUsedInfoBuffer[position] = TimeUsed(
                     packageName = packageName,
                     timeInForeground = timeInForeground,
-                    applicationName = applicationName,
-                    position = timeUsedInfoBuffer.size - 1
+                    applicationName = applicationName
                 )
             }
         } else {
-            createTimeUsed(
+            timeUsedInfoBuffer[0] = TimeUsed(
                 packageName = packageName,
                 timeInForeground = timeInForeground,
                 applicationName = applicationName,
-                position = 0
             )
         }
-        return true
+        return
     }
 
-    private fun createTimeUsed(
-        packageName: String,
-        timeInForeground: Long,
-        applicationName: String,
-        position: Int
-    ) {
-        timeUsedInfoBuffer[position].setPackageName(packageName)
-        timeUsedInfoBuffer[position].setTimeInForeground(timeInForeground)
-        timeUsedInfoBuffer[position].setApplicationName(applicationName)
-    }
-
+    // при изменении даты
     fun onDateSelected(date: Date) {
-        getStateUsageFromEvent(date)
-        getDateSeparate(date)
-        currentDate = date
+        _timeUsedInfo.value = getStateUsageFromEvent(date, statsManager)
+        _currentDate.value = date
     }
 
-    fun closeDialog() {
-        _dateDialogIsVisible.value = false
-        _animateItem.value = true
-    }
-
+    // изменение видимости диалогового окна
     fun changeDateDialogVisible(isVisible: Boolean) {
         _dateDialogIsVisible.value = !isVisible
-        _animateItem.value = false
     }
 }

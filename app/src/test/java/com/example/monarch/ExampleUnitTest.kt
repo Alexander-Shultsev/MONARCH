@@ -14,6 +14,8 @@ class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
 //        assertEquals(timeFormatter(1678377773150), "19ч 2м 53с")
-        timeFormatter(1678377773150)
+        for (i in 0..1000000) {
+            timeFormatter(1678377773150)
+        }
     }
 }

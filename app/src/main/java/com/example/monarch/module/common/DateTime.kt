@@ -1,24 +1,25 @@
 package com.example.monarch.module.common
 
-import java.text.SimpleDateFormat
+import com.example.monarch.module.timeused.data.Constant
+import com.example.monarch.module.timeused.data.DateString
 import java.util.*
 
 class DateTime {
-    companion object {
 
-        // millisecond to ##ч ##м ##с
+    companion object {
+        // миллисекунды в 00д 00ч 00м 00с
         fun timeFormatter(milliSeconds: Long): String { 
-            val secondTotal = milliSeconds / 1000
-            val minuteTotal = secondTotal / 60
-            val hourTotal = minuteTotal / 60
-            val day = hourTotal / 24
-            val hour = hourTotal - day
-            val _minuteInHour = hour * 60
-            val minute = minuteTotal - _minuteInHour
-            val second = secondTotal - _minuteInHour * 60 - minute * 60
+            val secondInMillisecond = milliSeconds / 1000
+            val minuteInMillisecond = secondInMillisecond / 60
+            val hourInMillisecond = minuteInMillisecond / 60
+            val day = hourInMillisecond / 24
+            val hour = hourInMillisecond - day
+            val minuteInHour = hour * 60
+            val minute = minuteInMillisecond - minuteInHour
+            val second = secondInMillisecond - minuteInHour * 60 - minute * 60
 
             if (day == 0L && hour == 0L && minute == 0L && second == 0L) {
-                return "0"
+                return "нет данных"
             }
             if (day == 0L && hour == 0L && minute == 0L) {
                 return "${second}c"
@@ -31,6 +32,16 @@ class DateTime {
             }
 
             return "${day}д ${hour}ч ${minute}м ${second}c"
+        }
+
+        // разделить дату в виде в совокупность отдельных строк
+        fun getDateString(date: Date): DateString {
+            val day = Constant.dayFormat.format(date)
+            val month = Constant.monthFullFormat.format(date)
+            val dayOfWeek = Constant.dayOfWeekFullFormat.format(date)
+            val year = Constant.yearFullFormat.format(date)
+
+            return DateString(day, month, dayOfWeek, year)
         }
     }
 }
