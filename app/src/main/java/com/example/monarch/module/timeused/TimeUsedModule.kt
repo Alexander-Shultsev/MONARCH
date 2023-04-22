@@ -59,7 +59,10 @@ class TimeUsedModule : ViewModel() {
     // список установленных покетов
     private var packages: List<ApplicationInfo> = listOf()
 
+    // имя приложения
     private var applicationName: String = ""
+
+    // найден ли элемент в массиве
     private var findElem: Boolean = false
 
     init {
