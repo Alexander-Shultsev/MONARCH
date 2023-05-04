@@ -13,6 +13,7 @@ class Constant {
         val monthFullFormat = SimpleDateFormat("MMMM", Locale("RU"))
         val dayOfWeekFullFormat = SimpleDateFormat("EEE", Locale("RU"))
         val yearFullFormat = SimpleDateFormat("yyyy", Locale("RU"))
+        val dateFormat  = SimpleDateFormat("MM-dd-yyyy", Locale("RU"))
 
         init {
             CURRENT_DATE = currentDate.parse(currentDate.format(Date())) as Date

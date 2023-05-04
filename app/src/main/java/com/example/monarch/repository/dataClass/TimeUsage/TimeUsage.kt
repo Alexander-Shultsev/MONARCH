@@ -1,7 +1,6 @@
-package com.example.monarch.repository.model
+package com.example.monarch.repository.dataClass.TimeUsage
 
 import com.example.monarch.module.common.DateTime
-import java.util.Date
 
 data class TimeUsage (
     val idTimeUsage: Int,

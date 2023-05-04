@@ -14,9 +14,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.monarch.module.common.App.Companion.getContextInstanse
+import com.example.monarch.module.common.DateTime
 import com.example.monarch.module.timeused.data.Constant.Companion.CURRENT_DATE
 import com.example.monarch.module.timeused.data.Constant.Companion.MINIMUM_GET_TIME
+import com.example.monarch.module.timeused.data.Constant.Companion.dateFormat
 import com.example.monarch.module.timeused.data.TimeUsed
+import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageInsert
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -56,16 +59,46 @@ class TimeUsedModule : ViewModel() {
     private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData(arrayListOf())
     val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
 
+    // запросы для модуля TimeUsage
+    private val timeUsageQuery = TimeUsageQuery()
+
     // список установленных покетов
     private var packages: List<ApplicationInfo> = listOf()
 
     // имя приложения
     private var applicationName: String = ""
 
+    // события от приложения
+    class Action(private var value: Int) {
+        companion object {
+            const val QUERY_PERMISSION_STATE_USED = 0
+        }
+
+        fun getValue(): Int = value
+
+        fun setValue(value: Int) {
+            this.value = value
+        }
+    }
+
     // найден ли элемент в массиве
     private var findElem: Boolean = false
 
     init {
+        val startDateTime = arrayListOf("2021-01-01 10:10:10", "2021-01-02 10:10:10")
+        val endDateTime = arrayListOf("2021-01-01 10:12:10", "2021-01-02 10:13:10")
+        val appLabel = arrayListOf("telegram", "telegram")
+        val appNameId = arrayListOf("org.telegram", "org.telegram")
+        val fkUser = arrayListOf(1, 1)
+
+        timeUsageQuery.postTimeUsage(
+            startDateTime,
+            endDateTime,
+            appLabel,
+            appNameId,
+            fkUser
+        )
+
         _currentDate.value = CURRENT_DATE
         _dateDialogIsVisible.value = false
         _stateUsagePermission.value = checkUsageStatsPermission()
@@ -84,19 +117,6 @@ class TimeUsedModule : ViewModel() {
                     PackageManager.GET_META_DATA.toLong()
                 )
             )
-        }
-    }
-
-    // события от приложения
-    class Action(private var value: Int) {
-        companion object {
-            const val QUERY_PERMISSION_STATE_USED = 0
-        }
-
-        fun getValue(): Int = value
-
-        fun setValue(value: Int) {
-            this.value = value
         }
     }
 
@@ -144,6 +164,7 @@ class TimeUsedModule : ViewModel() {
         val endTime = Calendar.getInstance()
         var currentEvent: UsageEvents.Event
         val timeUsedInfoBuffer = ArrayList<TimeUsed>()
+//        val timeUsageInsert = TimeUsageInsert()
 
         endTime.time = startTime
         endTime.add(Calendar.DAY_OF_MONTH, 1)
