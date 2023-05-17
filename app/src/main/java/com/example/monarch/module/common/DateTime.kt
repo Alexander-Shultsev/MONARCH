@@ -1,8 +1,10 @@
 package com.example.monarch.module.common
 
 import com.example.monarch.module.timeused.data.Constant
+import com.example.monarch.module.timeused.data.Constant.Companion.dateTimeFullFormat
 import com.example.monarch.module.timeused.data.DateString
 import java.util.*
+import kotlin.collections.ArrayList
 
 class DateTime {
     companion object {
@@ -31,6 +33,18 @@ class DateTime {
             }
 
             return "${day}д ${hour}ч ${minute}м ${second}c"
+        }
+
+        // массив миллисекунд в массив 2021-12-31 10:10:10
+        fun timeFormatterInsert(milliSeconds: ArrayList<Long>): ArrayList<String> {
+            val calendar = Calendar.getInstance()
+            val dateTimeStringArray = arrayListOf<String>()
+
+            for (elem in milliSeconds) {
+                calendar.timeInMillis = elem
+                dateTimeStringArray.add(dateTimeFullFormat.format(calendar.time))
+            }
+            return dateTimeStringArray
         }
 
         // разделить дату в виде в совокупность отдельных строк

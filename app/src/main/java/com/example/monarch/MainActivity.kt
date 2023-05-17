@@ -23,6 +23,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.monarch.ui.screen.MainScreen
 import com.example.monarch.ui.theme.MonarchTheme
 import com.example.monarch.module.timeused.TimeUsedModule
+import com.example.monarch.module.timeused.jobservice.JobServiceMain
 
 
 class MainActivity : ComponentActivity() {
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
         init()
         createObserve()
         setContent()
+        service()
     }
 
     private fun init() {
@@ -53,6 +55,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun service() {
+        val service = JobServiceMain()
+        service.startJob()
     }
 
     private fun createObserve() {

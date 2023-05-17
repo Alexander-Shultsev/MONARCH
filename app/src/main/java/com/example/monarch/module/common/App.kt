@@ -13,7 +13,7 @@ class App : Application() {
     companion object {
         private var instance: App? = null
 
-        fun getContextInstanse() : Context {
+        fun getContextInstance() : Context {
             return instance!!.applicationContext
         }
     }
