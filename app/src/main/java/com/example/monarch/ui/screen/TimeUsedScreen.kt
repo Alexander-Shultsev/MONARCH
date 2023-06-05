@@ -15,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import com.example.monarch.module.common.DatePicker
+import com.example.monarch.ui.component.DatePicker
 import com.example.monarch.module.common.DateTime
 import com.example.monarch.module.common.DateTime.Companion.getDateString
 import com.example.monarch.ui.*
@@ -119,7 +119,7 @@ fun StateUsageScreen(
     viewModel: TimeUsedModule
 ) {
     val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
-    val timeUsedInfo = viewModel.timeUsedInfo.observeAsState()
+    val timeUsageDevice = viewModel.timeUsageDevice.observeAsState()
     val currentDate = viewModel.currentDate.observeAsState()
 
 //    val timeUsedInfo = arrayListOf(
@@ -168,7 +168,7 @@ fun StateUsageScreen(
                 .fillMaxSize()
         ) {
             item {
-                for (elem in timeUsedInfo.value!!) {
+                for (elem in timeUsageDevice.value!!) {
                     Column(
                         modifier = Modifier
                             .background(MaterialTheme.colors.secondary)
@@ -183,13 +183,13 @@ fun StateUsageScreen(
                                 .fillMaxWidth()
                         ) {
                             H5(
-                                text = elem.getApplicationName(),
+                                text = elem.appLabel,
                                 modifier = Modifier.padding(bottom = 2.dp),
                                 color = MaterialTheme.colors.primary
                             )
 
                             H6(
-                                text = DateTime.timeFormatter(elem.getTimeInForeground()),
+                                text = DateTime.timeFormatter(elem.duration),
                                 modifier = Modifier
                                     .fillMaxWidth(),
                                 color = MaterialTheme.colors.primary

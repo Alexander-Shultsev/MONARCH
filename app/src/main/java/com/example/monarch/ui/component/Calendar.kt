@@ -1,4 +1,4 @@
-package com.example.monarch.module.common
+package com.example.monarch.ui.component
 
 import android.content.ContentValues.TAG
 import android.util.Log
@@ -24,7 +24,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun DatePicker(onDateSelected: (Date) -> Unit, closeDialog: () -> Unit, currentDate: Long) {
+fun DatePicker(
+    onDateSelected: (Date) -> Unit,
+    closeDialog: () -> Unit,
+    currentDate: Long
+) {
     val setDate = remember { mutableStateOf(Date(currentDate)) }
 
     Dialog(onDismissRequest = { closeDialog() }, properties = DialogProperties()) {

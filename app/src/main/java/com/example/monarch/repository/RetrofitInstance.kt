@@ -1,5 +1,6 @@
 package com.example.monarch.repository
 
+import com.example.monarch.repository.TimeUsage.TimeUsageQueryInterface
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -29,6 +30,7 @@ class RetrofitInstance {
                 .build()
         }
 
-        val serviceTimeUsage: TimeUsageQuery by lazy { retrofitInstance().create(TimeUsageQuery::class.java) }
+        val serviceTimeUsage: TimeUsageQueryInterface by lazy { retrofitInstance().create(
+            TimeUsageQueryInterface::class.java) }
     }
 }

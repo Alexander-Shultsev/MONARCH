@@ -1,7 +1,8 @@
 package com.example.monarch.module.common
 
-import com.example.monarch.module.timeused.data.Constant
-import com.example.monarch.module.timeused.data.Constant.Companion.dateTimeFullFormat
+import com.example.monarch.module.timeused.data.ConstantTimeUsage
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.dateDataBase
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.dateTimeFullFormat
 import com.example.monarch.module.timeused.data.DateString
 import java.util.*
 import kotlin.collections.ArrayList
@@ -9,7 +10,7 @@ import kotlin.collections.ArrayList
 class DateTime {
     companion object {
         // миллисекунды в 00д 00ч 00м 00с
-        fun timeFormatter(milliSeconds: Long): String { 
+        fun timeFormatter1(milliSeconds: Long): String {
             val secondInMillisecond = milliSeconds / 1000
             val minuteInMillisecond = secondInMillisecond / 60
             val hourInMillisecond = minuteInMillisecond / 60
@@ -18,6 +19,31 @@ class DateTime {
             val minuteInHour = hour * 60
             val minute = minuteInMillisecond - minuteInHour
             val second = secondInMillisecond - minuteInHour * 60 - minute * 60
+
+            if (day == 0L && hour == 0L && minute == 0L && second == 0L) {
+                return "нет данных"
+            }
+            if (day == 0L && hour == 0L && minute == 0L) {
+                return "${second}c"
+            }
+            if (day == 0L && hour == 0L) {
+                return "${minute}м ${second}c"
+            }
+            if (day == 0L) {
+                return "${hour}ч ${minute}м ${second}c"
+            }
+
+            return "${day}д ${hour}ч ${minute}м ${second}c"
+        }
+
+        fun timeFormatter(seconds: Long): String {
+            val minuteInSeconds = seconds / 60
+            val hourInSeconds = minuteInSeconds / 60
+
+            val day = hourInSeconds / 24
+            val hour = hourInSeconds - day * 24
+            val minute = minuteInSeconds - hourInSeconds * 60
+            val second = seconds - minuteInSeconds * 60
 
             if (day == 0L && hour == 0L && minute == 0L && second == 0L) {
                 return "нет данных"
@@ -49,12 +75,17 @@ class DateTime {
 
         // разделить дату в виде в совокупность отдельных строк
         fun getDateString(date: Date): DateString {
-            val day = Constant.dayFormat.format(date)
-            val month = Constant.monthFullFormat.format(date)
-            val dayOfWeek = Constant.dayOfWeekFullFormat.format(date)
-            val year = Constant.yearFullFormat.format(date)
+            val day = ConstantTimeUsage.dayFormat.format(date)
+            val month = ConstantTimeUsage.monthFullFormat.format(date)
+            val dayOfWeek = ConstantTimeUsage.dayOfWeekFullFormat.format(date)
+            val year = ConstantTimeUsage.yearFullFormat.format(date)
 
             return DateString(day, month, dayOfWeek, year)
+        }
+
+        // разделить дату в виде в совокупность отдельных строк
+        fun getDateDataBase(date: Date): String {
+            return dateDataBase.format(date)
         }
     }
 }

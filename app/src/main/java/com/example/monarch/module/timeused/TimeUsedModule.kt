@@ -15,10 +15,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.monarch.module.common.App.Companion.getContextInstance
+import com.example.monarch.module.common.Constant
+import com.example.monarch.module.common.DateTime
 import com.example.monarch.module.common.DateTime.Companion.timeFormatterInsert
-import com.example.monarch.module.timeused.data.Constant.Companion.TODAY_DATE
-import com.example.monarch.module.timeused.data.Constant.Companion.MINIMUM_GET_TIME
-import com.example.monarch.module.timeused.data.TimeUsed
+import com.example.monarch.module.timeused.data.ConstantTimeUsage
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TODAY_DATE
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.MINIMUM_GET_TIME
+import com.example.monarch.repository.TimeUsage.TimeUsageQuery
+import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageDevice
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageInsert
 import java.util.Calendar
 import java.util.Date
@@ -58,9 +62,9 @@ class TimeUsedModule : ViewModel() {
     private val _currentDate: MutableLiveData<Date> = MutableLiveData()
     val currentDate: LiveData<Date> = _currentDate
 
-    // список TimeUsed
-    private val _timeUsedInfo: MutableLiveData<ArrayList<TimeUsed>> = MutableLiveData(arrayListOf())
-    val timeUsedInfo: LiveData<ArrayList<TimeUsed>> = _timeUsedInfo
+    // список строк о времени использования устройства с сервера сгруппированного по приложениям
+    private val _timeUsageDevice: MutableLiveData<ArrayList<TimeUsageDevice>> = MutableLiveData()
+    val timeUsageDevice: LiveData<ArrayList<TimeUsageDevice>> = _timeUsageDevice
 
     // запросы для модуля TimeUsage
     private val timeUsageQuery = TimeUsageQuery()
@@ -70,9 +74,6 @@ class TimeUsedModule : ViewModel() {
 
     // имя приложения
     private var applicationName: String = ""
-
-    // данные для запроса на добавление TimeUsage на сервер
-    private var timeUsageInsert = TimeUsageInsert()
 
     // события от приложения
     class Action(private var value: Int) {
@@ -95,19 +96,9 @@ class TimeUsedModule : ViewModel() {
         _currentDate.value = TODAY_DATE
         _dateDialogIsVisible.value = false
         _stateUsagePermission.value = checkUsageStatsPermission()
-    }
+        _timeUsageDevice.value = arrayListOf(TimeUsageDevice("", 0L))
 
-    // получить названия всех установленных приложений на устройстве
-    private fun getPackageLabels() {
-        packages = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-        } else {
-            packageManager.getInstalledApplications(
-                PackageManager.ApplicationInfoFlags.of(
-                    PackageManager.GET_META_DATA.toLong()
-                )
-            )
-        }
+        getTimeUsageDevice(_currentDate.value!!)
     }
 
     // выдача разрешение на сбор данных об использовании устройства
@@ -144,6 +135,19 @@ class TimeUsedModule : ViewModel() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    // получить названия всех установленных приложений на устройстве
+    private fun getPackageLabels() {
+        packages = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        } else {
+            packageManager.getInstalledApplications(
+                PackageManager.ApplicationInfoFlags.of(
+                    PackageManager.GET_META_DATA.toLong()
+                )
+            )
+        }
+    }
+
     // получить статистику за день
     fun getStateUsageFromEvent(
         dateToday: Date
@@ -160,9 +164,8 @@ class TimeUsedModule : ViewModel() {
         startTime.time = dateToday
         endTime.time = dateToday
 
-        startTime.add(Calendar.DAY_OF_MONTH, -1)
-//        startTime.add(Calendar.DAY_OF_MONTH, -1)
-//        startTime.add(Calendar.HOUR, -3)
+        endTime.add(Calendar.DAY_OF_MONTH, 1)
+        endTime.add(Calendar.SECOND, -1)
 
         // получение событий статистики использования
         val statsEvent = statsManager.queryEvents(
@@ -170,22 +173,18 @@ class TimeUsedModule : ViewModel() {
             endTime.timeInMillis
         )
 
-        Log.i(TAG, startTime.timeInMillis.toString())
-        Log.i(TAG, endTime.timeInMillis.toString())
-
         // TODO объединить 2 цикла в 1
+        Log.i(TAG,  startTime.timeInMillis.toString())
+        Log.i(TAG,  endTime.timeInMillis.toString())
 
         // распределение событий по пакетам
         while (statsEvent.hasNextEvent()) {
             currentEvent = UsageEvents.Event()
             statsEvent.getNextEvent(currentEvent)
 
-            Log.i(TAG, "1")
-
             if (currentEvent.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
                 currentEvent.eventType == UsageEvents.Event.ACTIVITY_PAUSED
             ) {
-                Log.i(TAG, "2")
                 val key = currentEvent.packageName
                 if (eventList[key] == null) { // если пакет не существует
                     eventList[key] = mutableListOf() // создать пустой пакет
@@ -269,12 +268,22 @@ class TimeUsedModule : ViewModel() {
 
     // при изменении даты
     fun onDateSelected(date: Date) {
-//        _timeUsedInfo.value = getStateUsageFromEvent(date, statsManager)
         _currentDate.value = date
+        getTimeUsageDevice(date)
     }
 
     // изменение видимости диалогового окна
     fun changeDateDialogVisible(isVisible: Boolean) {
         _dateDialogIsVisible.value = !isVisible
+    }
+
+    // получить данные с сервера о времени использования устройства агрегированные по приложениям
+    private fun getTimeUsageDevice(date: Date) {
+        val dateString = DateTime.getDateDataBase(date)
+
+        timeUsageQuery.getTimeUsageDevice(
+            dateString,
+            _timeUsageDevice
+        )
     }
 }

@@ -20,28 +20,31 @@ class JobServiceMain {
         ComponentName(getContextInstance(), MyJobScheduler::class.java)
 
     fun startJob() {
-//        if (isJobServiceRunning(getContextInstance(), timeUsagePostJobId)) {
+        var jobIsScheduler: Int = -1
+
+        if (!isJobServiceRunning(getContextInstance(), timeUsagePostJobId)) {
             val timeUsagePostJob = JobInfo.Builder(timeUsagePostJobId, component)
                 .setPeriodic(TimeUnit.MINUTES.toMillis(15))// период выполнения (минимум 15 мин)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) // тип сети
                 .setPersisted(true) // чтобы сервис продолжал работать даже после перезагрузки
                 .build()
 
-            val jobIsScheduler = jobScheduler.schedule(timeUsagePostJob)
-
-            checkJobStart(jobIsScheduler)
-//        }
+            jobIsScheduler = jobScheduler.schedule(timeUsagePostJob)
+        }
+        checkJobStart(jobIsScheduler)
     }
 
     private fun checkJobStart(jobIsScheduler: Int) {
         if (jobIsScheduler == JobScheduler.RESULT_SUCCESS) {
             Log.i(TAG, "startJob: jobIsStart")
         } else {
-            Log.i(TAG, "startJob: jobIsNotStart")
+            Log.i(TAG, "startJob: jobStartAlready")
         }
     }
 
-    private fun isJobServiceRunning(context: Context, jobId: Int): Boolean {
+    private fun isJobServiceRunning(
+        context: Context, jobId: Int
+    ): Boolean {
         val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         for (jobInfo in scheduler.allPendingJobs) {
             if (jobInfo.id == jobId) {
