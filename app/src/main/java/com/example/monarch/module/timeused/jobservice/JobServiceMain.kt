@@ -7,6 +7,8 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.Log
 import com.example.monarch.module.common.App.Companion.getContextInstance
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TIME_FOR_COLLECT
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.UNIT_OF_MEASUREMENT_FOR_JOB_SCHEDULER
 import java.util.concurrent.TimeUnit
 
 class JobServiceMain {
@@ -24,7 +26,7 @@ class JobServiceMain {
 
         if (!isJobServiceRunning(getContextInstance(), timeUsagePostJobId)) {
             val timeUsagePostJob = JobInfo.Builder(timeUsagePostJobId, component)
-                .setPeriodic(TimeUnit.MINUTES.toMillis(15))// период выполнения (минимум 15 мин)
+                .setPeriodic(UNIT_OF_MEASUREMENT_FOR_JOB_SCHEDULER.toMillis(TIME_FOR_COLLECT * 1L))// период выполнения (минимум 15 мин)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) // тип сети
                 .setPersisted(true) // чтобы сервис продолжал работать даже после перезагрузки
                 .build()

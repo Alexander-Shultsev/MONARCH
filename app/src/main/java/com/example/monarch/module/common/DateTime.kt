@@ -9,33 +9,7 @@ import kotlin.collections.ArrayList
 
 class DateTime {
     companion object {
-        // миллисекунды в 00д 00ч 00м 00с
-        fun timeFormatter1(milliSeconds: Long): String {
-            val secondInMillisecond = milliSeconds / 1000
-            val minuteInMillisecond = secondInMillisecond / 60
-            val hourInMillisecond = minuteInMillisecond / 60
-            val day = hourInMillisecond / 24
-            val hour = hourInMillisecond - day
-            val minuteInHour = hour * 60
-            val minute = minuteInMillisecond - minuteInHour
-            val second = secondInMillisecond - minuteInHour * 60 - minute * 60
-
-            if (day == 0L && hour == 0L && minute == 0L && second == 0L) {
-                return "нет данных"
-            }
-            if (day == 0L && hour == 0L && minute == 0L) {
-                return "${second}c"
-            }
-            if (day == 0L && hour == 0L) {
-                return "${minute}м ${second}c"
-            }
-            if (day == 0L) {
-                return "${hour}ч ${minute}м ${second}c"
-            }
-
-            return "${day}д ${hour}ч ${minute}м ${second}c"
-        }
-
+        // секунды в 00д 00ч 00м 00с
         fun timeFormatter(seconds: Long): String {
             val minuteInSeconds = seconds / 60
             val hourInSeconds = minuteInSeconds / 60
@@ -73,7 +47,7 @@ class DateTime {
             return dateTimeStringArray
         }
 
-        // разделить дату в виде в совокупность отдельных строк
+        // разделить дату в виде в совокупности отдельных строк
         fun getDateString(date: Date): DateString {
             val day = ConstantTimeUsage.dayFormat.format(date)
             val month = ConstantTimeUsage.monthFullFormat.format(date)

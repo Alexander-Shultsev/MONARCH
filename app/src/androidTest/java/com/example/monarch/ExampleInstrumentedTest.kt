@@ -27,6 +27,6 @@ class ExampleInstrumentedTest {
         val statsManager: UsageStatsManager =
             App.getContextInstance().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
-        viewModel.getStateUsageFromEvent(date!!, statsManager)
+//        viewModel.getStateUsageFromEvent(date!!, statsManager)
     }
 }

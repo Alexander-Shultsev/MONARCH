@@ -17,10 +17,16 @@ import androidx.lifecycle.ViewModel
 import com.example.monarch.module.common.App.Companion.getContextInstance
 import com.example.monarch.module.common.Constant
 import com.example.monarch.module.common.DateTime
+import com.example.monarch.module.common.DateTime.Companion.timeFormatter
 import com.example.monarch.module.common.DateTime.Companion.timeFormatterInsert
 import com.example.monarch.module.timeused.data.ConstantTimeUsage
 import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TODAY_DATE
 import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.MINIMUM_GET_TIME
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TIME_FOR_COLLECT
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.UNIT_OF_MEASUREMENT_FOR_FUNCTION
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.timeHourFormat
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.timeMinuteFormat
+import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.timeSecondFormat
 import com.example.monarch.repository.TimeUsage.TimeUsageQuery
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageDevice
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageInsert
@@ -157,26 +163,32 @@ class TimeUsedModule : ViewModel() {
         val startTime = Calendar.getInstance()
         val endTime = Calendar.getInstance()
         var currentEvent: UsageEvents.Event
-
         // временные данные для отправки на сервер
         val timeUsageInsertBuffer = TimeUsageInsert()
 
-        startTime.time = dateToday
         endTime.time = dateToday
 
-        endTime.add(Calendar.DAY_OF_MONTH, 1)
-        endTime.add(Calendar.SECOND, -1)
+        // получение информации о текущем времени
+        val currentHour = timeHourFormat.format(Date())
+        val currentMinute = timeMinuteFormat.format(Date())
+        val currentSecond = timeSecondFormat.format(Date())
+
+        endTime.add(Calendar.HOUR, currentHour.toInt())
+        endTime.add(Calendar.MINUTE, currentMinute.toInt())
+        endTime.add(Calendar.SECOND, currentSecond.toInt())
+
+        startTime.time = endTime.time
+
+        startTime.add(UNIT_OF_MEASUREMENT_FOR_FUNCTION, -1 * TIME_FOR_COLLECT)
 
         // получение событий статистики использования
         val statsEvent = statsManager.queryEvents(
             startTime.timeInMillis,
             endTime.timeInMillis
         )
+        var count = 0
 
         // TODO объединить 2 цикла в 1
-        Log.i(TAG,  startTime.timeInMillis.toString())
-        Log.i(TAG,  endTime.timeInMillis.toString())
-
         // распределение событий по пакетам
         while (statsEvent.hasNextEvent()) {
             currentEvent = UsageEvents.Event()
@@ -190,8 +202,14 @@ class TimeUsedModule : ViewModel() {
                     eventList[key] = mutableListOf() // создать пустой пакет
                 }
                 eventList[key]!!.add(currentEvent)
+//                Log.i(TAG, "getStateUsageFromEvent: ${currentEvent.packageName} - ${currentEvent.eventType} - ${currentEvent.timeStamp}")
+                count++
             }
         }
+
+        Log.i(TAG, "count: ${count / 2}")
+
+        var innerCount = 0
 
         // перебор всех совокупностей событий в пакетах
         for (elem in eventList) {
@@ -200,20 +218,32 @@ class TimeUsedModule : ViewModel() {
             var timeInPackage: Long = 0 // время использования устройства в миллисекундах
             var endDataTime: Long = 0 // конец добавляемого используемого приложение
             var startDataTime: Long = 0 // начало добавляемого используемого приложение
+            var listStart = 0 // первый элемент в пакете для начала перебора
+
+            Log.i(TAG, "pakage name - $packageName")
+
+            // если первый элемент списка имеет тип ACTIVITY_PAUSED, то начать перебор со второго элемента
+            val eventStart = elem.value[0]
+            if (eventStart.eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
+                listStart++
+            }
 
             // перебор всех событий в пакете
-            for (event in 0 until elemEventsCount - 1) {
+            for (event in listStart until elemEventsCount - 1 step 2) {
+                innerCount++
+
                 val event0 = elem.value[event]
                 val event1 = elem.value[event + 1]
 
-                if (event0.eventType == UsageEvents.Event.ACTIVITY_RESUMED
-                    && event1.eventType == UsageEvents.Event.ACTIVITY_PAUSED
-                ) {
-                    endDataTime = event1.timeStamp
-                    startDataTime = event0.timeStamp
-                    val timeInForeground: Long = event1.timeStamp - event0.timeStamp
-                    timeInPackage += timeInForeground
-                }
+                Log.i(TAG, "getStateUsageFromEvent: ${event0.packageName} - ${event0.eventType} - ${event0.timeStamp}")
+                Log.i(TAG, "getStateUsageFromEvent: ${event1.packageName} - ${event1.eventType} - ${event1.timeStamp}")
+
+                startDataTime = event0.timeStamp
+                endDataTime = event1.timeStamp
+
+                val timeInForeground: Long = endDataTime - startDataTime
+                timeInPackage += timeInForeground
+
             }
             if (timeInPackage >= MINIMUM_GET_TIME) {
                 addInTimeUsageInsert(
@@ -225,6 +255,8 @@ class TimeUsedModule : ViewModel() {
                 )
             }
         }
+
+        Log.i(TAG, "count: ${innerCount}")
 
         // выполнение запроса на добавление TimeUsage
         timeUsageInsertBuffer.apply {
