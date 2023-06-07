@@ -12,6 +12,7 @@ val Success = Green
 val Error = Red
 
 val onPrimaryMedium = Color(0x80FFFFFF)
+val onPrimaryLight = Color(0x4DFFFFFF)
 
 val LightColorPalette = lightColors(
     primary = Purple,

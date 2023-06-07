@@ -1,4 +1,4 @@
-package com.example.monarch.module.timeused.jobservice
+package com.example.monarch.viewModel.timeused.jobservice
 
 import android.app.job.JobInfo
 import android.app.job.JobScheduler
@@ -6,10 +6,9 @@ import android.content.ComponentName
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.Log
-import com.example.monarch.module.common.App.Companion.getContextInstance
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TIME_FOR_COLLECT
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.UNIT_OF_MEASUREMENT_FOR_JOB_SCHEDULER
-import java.util.concurrent.TimeUnit
+import com.example.monarch.di.App.Companion.getContextInstance
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.TIME_FOR_COLLECT
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.UNIT_OF_MEASUREMENT_FOR_JOB_SCHEDULER
 
 class JobServiceMain {
 

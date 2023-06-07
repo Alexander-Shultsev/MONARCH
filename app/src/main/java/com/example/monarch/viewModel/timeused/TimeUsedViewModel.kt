@@ -1,32 +1,27 @@
-package com.example.monarch.module.timeused
+package com.example.monarch.viewModel.timeused
 
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.monarch.module.common.App.Companion.getContextInstance
-import com.example.monarch.module.common.Constant
-import com.example.monarch.module.common.DateTime
-import com.example.monarch.module.common.DateTime.Companion.timeFormatter
-import com.example.monarch.module.common.DateTime.Companion.timeFormatterInsert
-import com.example.monarch.module.timeused.data.ConstantTimeUsage
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TODAY_DATE
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.MINIMUM_GET_TIME
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.TIME_FOR_COLLECT
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.UNIT_OF_MEASUREMENT_FOR_FUNCTION
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.timeHourFormat
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.timeMinuteFormat
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.timeSecondFormat
+import com.example.monarch.di.App.Companion.getContextInstance
+import com.example.monarch.viewModel.common.DateTime
+import com.example.monarch.viewModel.common.DateTime.Companion.timeFormatterInsert
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.TODAY_DATE
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.MINIMUM_GET_TIME
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.TIME_FOR_COLLECT
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.UNIT_OF_MEASUREMENT_FOR_FUNCTION
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.timeHourFormat
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.timeMinuteFormat
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.timeSecondFormat
 import com.example.monarch.repository.TimeUsage.TimeUsageQuery
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageDevice
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageInsert
@@ -36,7 +31,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-class TimeUsedModule : ViewModel() {
+class TimeUsedViewModel : ViewModel() {
 
     // https://habr.com/ru/companies/epam_systems/articles/415335/
     // https://stackoverflow.com/questions/9177212/creating-background-service-in-android
@@ -45,24 +40,16 @@ class TimeUsedModule : ViewModel() {
     private val statsManager: UsageStatsManager =
         getContextInstance().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
-    // проверка выдачи разрешения на получение статистики использования приложений
-    private val appOpsManager: AppOpsManager =
-        getContextInstance().getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager
-
     // получения информации об установленных приложениях
     private val packageManager: PackageManager = getContextInstance().packageManager
 
-    // вызываемое событие (переход на экран запроса разрешения)
-    private val _action: MutableLiveData<Action> = MutableLiveData()
-    val action: LiveData<Action> = _action
+
 
     // отображение диалогового окна
     private val _dateDialogIsVisible: MutableLiveData<Boolean> = MutableLiveData()
     val dateDialogIsVisible: LiveData<Boolean> = _dateDialogIsVisible
 
-    // выдача разрешения на сбор статистики
-    private val _stateUsagePermission: MutableLiveData<Boolean> = MutableLiveData()
-    val stateUsagePermission: LiveData<Boolean> = _stateUsagePermission
+
 
     // выбранная дата
     private val _currentDate: MutableLiveData<Date> = MutableLiveData()
@@ -81,18 +68,7 @@ class TimeUsedModule : ViewModel() {
     // имя приложения
     private var applicationName: String = ""
 
-    // события от приложения
-    class Action(private var value: Int) {
-        companion object {
-            const val QUERY_PERMISSION_STATE_USED = 0
-        }
 
-        fun getValue(): Int = value
-
-        fun setValue(value: Int) {
-            this.value = value
-        }
-    }
 
     // инициализация
     init {
@@ -101,44 +77,9 @@ class TimeUsedModule : ViewModel() {
 
         _currentDate.value = TODAY_DATE
         _dateDialogIsVisible.value = false
-        _stateUsagePermission.value = checkUsageStatsPermission()
         _timeUsageDevice.value = arrayListOf(TimeUsageDevice("", 0L))
 
         getTimeUsageDevice(_currentDate.value!!)
-    }
-
-    // выдача разрешение на сбор данных об использовании устройства
-    fun setGrantedUsageStatsPermission() {
-        _stateUsagePermission.value = true
-    }
-
-    // запуск запроса на разрешение при его отсутствии
-    fun isUsageStatsPermission() {
-        _stateUsagePermission.value = checkUsageStatsPermission()
-
-        if (!_stateUsagePermission.value!!) { // если нет разрешений, дать их
-            _action.value = Action(Action.QUERY_PERMISSION_STATE_USED)
-        }
-    }
-
-    // проверка наличия разрешения
-    private fun checkUsageStatsPermission(): Boolean {
-        val context = getContextInstance()
-
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // android-sdk => 29
-            appOpsManager.unsafeCheckOpNoThrow(
-                "android:get_usage_stats",
-                Process.myUid(),
-                context.packageName
-            )
-        } else {
-            appOpsManager.checkOpNoThrow( // android-sdk < 29
-                "android:get_usage_stats",
-                Process.myUid(),
-                context.packageName
-            )
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
     }
 
     // получить названия всех установленных приложений на устройстве
@@ -155,9 +96,7 @@ class TimeUsedModule : ViewModel() {
     }
 
     // получить статистику за день
-    fun getStateUsageFromEvent(
-        dateToday: Date
-    ): TimeUsageInsert {
+    fun getStateUsageFromEvent(dateToday: Date) {
         // обнуление данных
         val eventList = HashMap<String, MutableList<UsageEvents.Event>>()
         val startTime = Calendar.getInstance()
@@ -186,7 +125,6 @@ class TimeUsedModule : ViewModel() {
             startTime.timeInMillis,
             endTime.timeInMillis
         )
-        var count = 0
 
         // TODO объединить 2 цикла в 1
         // распределение событий по пакетам
@@ -202,25 +140,17 @@ class TimeUsedModule : ViewModel() {
                     eventList[key] = mutableListOf() // создать пустой пакет
                 }
                 eventList[key]!!.add(currentEvent)
-//                Log.i(TAG, "getStateUsageFromEvent: ${currentEvent.packageName} - ${currentEvent.eventType} - ${currentEvent.timeStamp}")
-                count++
             }
         }
-
-        Log.i(TAG, "count: ${count / 2}")
-
-        var innerCount = 0
 
         // перебор всех совокупностей событий в пакетах
         for (elem in eventList) {
             val elemEventsCount = elem.value.size
             val packageName = elem.key
-            var timeInPackage: Long = 0 // время использования устройства в миллисекундах
-            var endDataTime: Long = 0 // конец добавляемого используемого приложение
-            var startDataTime: Long = 0 // начало добавляемого используемого приложение
+            var endDataTime: Long // конец добавляемого используемого приложение
+            var startDataTime: Long // начало добавляемого используемого приложение
+            var timeInForeground: Long
             var listStart = 0 // первый элемент в пакете для начала перебора
-
-            Log.i(TAG, "pakage name - $packageName")
 
             // если первый элемент списка имеет тип ACTIVITY_PAUSED, то начать перебор со второго элемента
             val eventStart = elem.value[0]
@@ -230,33 +160,24 @@ class TimeUsedModule : ViewModel() {
 
             // перебор всех событий в пакете
             for (event in listStart until elemEventsCount - 1 step 2) {
-                innerCount++
-
                 val event0 = elem.value[event]
                 val event1 = elem.value[event + 1]
 
-                Log.i(TAG, "getStateUsageFromEvent: ${event0.packageName} - ${event0.eventType} - ${event0.timeStamp}")
-                Log.i(TAG, "getStateUsageFromEvent: ${event1.packageName} - ${event1.eventType} - ${event1.timeStamp}")
-
                 startDataTime = event0.timeStamp
                 endDataTime = event1.timeStamp
+                timeInForeground = endDataTime - startDataTime
 
-                val timeInForeground: Long = endDataTime - startDataTime
-                timeInPackage += timeInForeground
-
-            }
-            if (timeInPackage >= MINIMUM_GET_TIME) {
-                addInTimeUsageInsert(
-                    packageName,
-                    endDataTime,
-                    startDataTime,
-                    timeUsageInsertBuffer,
-                    packages
-                )
+                if (timeInForeground >= MINIMUM_GET_TIME) {
+                    addInTimeUsageInsert(
+                        packageName,
+                        endDataTime,
+                        startDataTime,
+                        timeUsageInsertBuffer,
+                        packages
+                    )
+                }
             }
         }
-
-        Log.i(TAG, "count: ${innerCount}")
 
         // выполнение запроса на добавление TimeUsage
         timeUsageInsertBuffer.apply {
@@ -268,8 +189,6 @@ class TimeUsedModule : ViewModel() {
                 fkUser
             )
         }
-
-        return timeUsageInsertBuffer
     }
 
     // добавление информации о времени использования приложения в массив

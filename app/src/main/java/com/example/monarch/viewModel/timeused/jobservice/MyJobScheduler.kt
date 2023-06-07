@@ -1,10 +1,10 @@
-package com.example.monarch.module.timeused.jobservice
+package com.example.monarch.viewModel.timeused.jobservice
 
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.widget.Toast
-import com.example.monarch.module.timeused.TimeUsedModule
-import com.example.monarch.module.timeused.data.ConstantTimeUsage
+import com.example.monarch.viewModel.timeused.TimeUsedViewModel
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage
 
 
 class MyJobScheduler : JobService() {
@@ -14,7 +14,7 @@ class MyJobScheduler : JobService() {
     }
 
     override fun onStartJob(p0: JobParameters?): Boolean {
-        val timeUsageViewModel = TimeUsedModule()
+        val timeUsageViewModel = TimeUsedViewModel()
         timeUsageViewModel.getStateUsageFromEvent(ConstantTimeUsage.TODAY_DATE)
 
         return false

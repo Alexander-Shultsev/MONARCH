@@ -14,31 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.monarch.ui.component.DatePicker
-import com.example.monarch.module.common.DateTime
-import com.example.monarch.module.common.DateTime.Companion.getDateString
+import com.example.monarch.viewModel.common.DateTime
+import com.example.monarch.viewModel.common.DateTime.Companion.getDateString
 import com.example.monarch.ui.*
 import com.example.monarch.ui.theme.*
-import com.example.monarch.module.timeused.TimeUsedModule
+import com.example.monarch.viewModel.timeused.TimeUsedViewModel
 import com.monarchcompany.monarchapp.R
+import org.koin.androidx.compose.getViewModel
 import java.util.*
-
-
-@Composable
-fun MainScreen(
-    viewModel: TimeUsedModule
-) {
-    val stateUsagePermissionGranted = viewModel.stateUsagePermission.observeAsState()
-
-    if (stateUsagePermissionGranted.value!!) {
-        StateUsageScreen(viewModel)
-    } else {
-        RequestPermissionGetStateUsageScreen(
-            viewModel
-        )
-    }
-}
 
 //@Preview(showBackground = true)
 //@Composable
@@ -53,70 +41,11 @@ fun MainScreen(
 //    }
 //}
 
-@Composable
-fun RequestPermissionGetStateUsageScreen(
-    viewModel: TimeUsedModule
-) {
-    Column(
-        Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(.8f)
-                    .border(
-                        width = 2.dp,
-                        color = MaterialTheme.colors.onPrimary,
-                        shape = ShapesMain.medium
-                    )
-            ) {
-                Subtitle1(
-                    text = TextData.RequestPermissionScreen.text,
-                    modifier = Modifier
-                        .padding(Dimention.TextBlock.padding)
-                )
-            }
-
-            Box(
-                Modifier
-                    .width(2.dp)
-                    .height(120.dp)
-                    .background(onPrimaryMedium)
-            )
-
-            Box(
-                modifier = Modifier
-                    .clip(
-                        shape = RoundedCornerShape(
-                            topStartPercent = 1,
-                            topEndPercent = 50,
-                            bottomEndPercent = 1,
-                            bottomStartPercent = 50
-                        )
-                    )
-                    .background(MaterialTheme.colors.onPrimary)
-                    .clickable {
-                        viewModel.isUsageStatsPermission()
-                    }
-                    .padding(vertical = 16.dp, horizontal = 40.dp),
-            ) {
-                ButtonText(
-                    TextData.RequestPermissionScreen.button,
-                    color = MaterialTheme.colors.primary
-                )
-            }
-        }
-    }
-}
-
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun StateUsageScreen(
-    viewModel: TimeUsedModule
+fun TimeUsedScreen(
+    navController: NavController,
+    viewModel: TimeUsedViewModel = getViewModel()
 ) {
     val dateDialogIsVisible = viewModel.dateDialogIsVisible.observeAsState(false)
     val timeUsageDevice = viewModel.timeUsageDevice.observeAsState()
@@ -235,4 +164,10 @@ fun StateUsageScreen(
             currentDate.value!!.time
         )
     }
+}
+
+@Preview
+@Composable
+fun StateUsageScreenPreview() {
+    TimeUsedScreen(rememberNavController())
 }

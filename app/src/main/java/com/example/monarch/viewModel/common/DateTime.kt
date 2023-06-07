@@ -1,9 +1,9 @@
-package com.example.monarch.module.common
+package com.example.monarch.viewModel.common
 
-import com.example.monarch.module.timeused.data.ConstantTimeUsage
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.dateDataBase
-import com.example.monarch.module.timeused.data.ConstantTimeUsage.Companion.dateTimeFullFormat
-import com.example.monarch.module.timeused.data.DateString
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.dateDataBase
+import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.dateTimeFullFormat
+import com.example.monarch.viewModel.timeused.data.DateString
 import java.util.*
 import kotlin.collections.ArrayList
 

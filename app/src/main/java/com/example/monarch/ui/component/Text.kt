@@ -63,7 +63,7 @@ fun H2(
         modifier = modifier)
 }
 
-
+// Заголовок для кнопок
 @Composable
 fun Title1(
     text: String,
@@ -80,6 +80,7 @@ fun Title1(
         modifier = modifier)
 }
 
+// Заголовок основной
 @Composable
 fun Title2(
     text: String,
@@ -87,11 +88,11 @@ fun Title2(
     color: Color = Color.White
 ) {
     Text(
-        text = text.uppercase(),
+        text = text,
         style = TextStyle(
             fontFamily = manrope,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
             color = color),
         modifier = modifier)
 }

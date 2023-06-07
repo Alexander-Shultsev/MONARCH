@@ -1,9 +1,11 @@
 package com.example.monarch
 
 import android.app.Activity
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,29 +14,25 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.monarch.repository.TimeUsage.TimeUsageQuery
-import com.example.monarch.ui.screen.MainScreen
 import com.example.monarch.ui.theme.MonarchTheme
-import com.example.monarch.module.timeused.TimeUsedModule
-import com.example.monarch.module.timeused.jobservice.JobServiceMain
+import com.example.monarch.viewModel.timeused.TimeUsedViewModel
+import com.example.monarch.viewModel.timeused.jobservice.JobServiceMain
+import com.example.monarch.ui.screen.DefineStartScreen
+import com.example.monarch.viewModel.main.PermissionViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var viewModel: TimeUsedModule
+    private val permissionViewModel by viewModel<PermissionViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        init()
         createObserve()
         setContent()
         service()
-    }
-
-    private fun init() {
-        viewModel = TimeUsedModule()
     }
 
     private fun setContent() {
@@ -44,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colors.primary,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    MainScreen(viewModel)
+                    DefineStartScreen()
                 }
             }
         }
@@ -56,7 +54,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createObserve() {
-        viewModel.action.observe(this) { newAction ->
+        permissionViewModel.action.observe(this) { newAction ->
             handleAction(newAction)
         }
     }
@@ -65,15 +63,15 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
-                viewModel.setGrantedUsageStatsPermission()
+                permissionViewModel.setGrantedUsageStatsPermission()
             }
         }
 
     private fun handleAction(
-        action: TimeUsedModule.Action
+        action: PermissionViewModel.Action
     ) {
         when (action.getValue()) {
-            TimeUsedModule.Action.QUERY_PERMISSION_STATE_USED -> {
+            PermissionViewModel.Action.QUERY_PERMISSION_STATE_USED -> {
                 val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                 resultLauncher.launch(intent)
             }

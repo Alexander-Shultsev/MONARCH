@@ -1,6 +1,6 @@
 package com.example.monarch
 
-import com.example.monarch.module.common.DateTime.Companion.timeFormatter
+import com.example.monarch.viewModel.common.DateTime.Companion.timeFormatter
 import org.junit.Test
 
 import org.junit.Assert.*

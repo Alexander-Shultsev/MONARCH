@@ -1,4 +1,4 @@
-package com.example.monarch.module.timeused.data
+package com.example.monarch.viewModel.timeused.data
 
 data class DateString(
     val day: String,
