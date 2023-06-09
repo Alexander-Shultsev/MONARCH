@@ -1,5 +1,6 @@
 package com.example.monarch.repository
 
+import com.example.monarch.repository.TimeUsage.ExperimentsInterface
 import com.example.monarch.repository.TimeUsage.TimeUsageQueryInterface
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
@@ -32,5 +33,8 @@ class RetrofitInstance {
 
         val serviceTimeUsage: TimeUsageQueryInterface by lazy { retrofitInstance().create(
             TimeUsageQueryInterface::class.java) }
+
+        val serviceExperiments: ExperimentsInterface by lazy { retrofitInstance().create(
+            ExperimentsInterface::class.java) }
     }
 }

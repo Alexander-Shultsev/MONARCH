@@ -23,8 +23,9 @@ interface TimeUsageQueryInterface {
 
 
     // получить данные с сервера о времени использования устройства агрегированные по приложениям
-    @GET("timeUsage/selectDevice.php")
+    @GET("timeUsage/select.php")
     suspend fun getTimeUsageDevice(
-        @Query("date") date: String
+        @Query("date") date: String,
+        @Query("fkUser") fkUser: Int,
     ) : Response<ArrayList<TimeUsageDevice>>
 }

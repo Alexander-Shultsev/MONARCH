@@ -1,4 +1,4 @@
-package com.example.monarch.ui
+package com.example.monarch.presentation
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -6,11 +6,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.sp
-import com.example.monarch.ui.theme.manrope
-import java.util.*
+import com.example.monarch.presentation.theme.manrope
 
 /* h1 h2 h3 h4 h5 h6 subtitle1 subtitle2 body1 body2 button caption */
 
@@ -126,6 +123,5 @@ fun H6(
             fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
             color = color),
-        modifier = modifier,
-    textAlign = TextAlign.End)
+        modifier = modifier)
 }

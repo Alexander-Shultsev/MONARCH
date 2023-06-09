@@ -1,4 +1,4 @@
-package com.example.monarch.ui.screen
+package com.example.monarch.presentation.screen.TimeUsedScreen
 
 
 import android.annotation.SuppressLint
@@ -18,12 +18,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.monarch.ui.component.DatePicker
+import com.example.monarch.presentation.component.DatePicker
 import com.example.monarch.viewModel.common.DateTime
 import com.example.monarch.viewModel.common.DateTime.Companion.getDateString
-import com.example.monarch.ui.*
-import com.example.monarch.ui.theme.*
-import com.example.monarch.viewModel.timeused.TimeUsedViewModel
+import com.example.monarch.presentation.*
+import com.example.monarch.presentation.component.ItemListDoubleVertical
+import com.example.monarch.presentation.theme.*
+import com.example.monarch.viewModel.common.dataClass.ItemInfo
 import com.monarchcompany.monarchapp.R
 import org.koin.androidx.compose.getViewModel
 import java.util.*
@@ -41,6 +42,7 @@ import java.util.*
 //    }
 //}
 
+@OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("MutableCollectionMutableState")
 @Composable
 fun TimeUsedScreen(
@@ -98,34 +100,15 @@ fun TimeUsedScreen(
         ) {
             item {
                 for (elem in timeUsageDevice.value!!) {
-                    Column(
-                        modifier = Modifier
-                            .background(MaterialTheme.colors.secondary)
-                            .fillMaxWidth(),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(
-                                    horizontal = 10.dp,
-                                    vertical = 6.dp
-                                )
-                                .fillMaxWidth()
-                        ) {
-                            H5(
-                                text = elem.appLabel,
-                                modifier = Modifier.padding(bottom = 2.dp),
-                                color = MaterialTheme.colors.primary
-                            )
-
-                            H6(
-                                text = DateTime.timeFormatter(elem.duration),
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                color = MaterialTheme.colors.primary
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(5.dp))
+                    ItemListDoubleVertical(
+                        ItemInfo(
+                            topText = elem.appLabel,
+                            topTextArrangement = Arrangement.Start,
+                            bottomText = DateTime.timeFormatter(elem.duration),
+                            bottomTextArrangement = Arrangement.End
+                        ),
+                        onClick = {}
+                    )
                 }
                 Spacer(modifier = Modifier.height(90.dp))
             }

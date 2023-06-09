@@ -1,7 +1,5 @@
-package com.example.monarch.ui.screen
+package com.example.monarch.presentation.screen.RequestPermissionGetStateUsageScreen
 
-import android.content.ContentValues.TAG
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,16 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.example.monarch.viewModel.timeused.TimeUsedViewModel
-import com.example.monarch.ui.ButtonText
-import com.example.monarch.ui.Subtitle1
-import com.example.monarch.ui.theme.Dimention
-import com.example.monarch.ui.theme.ShapesMain
-import com.example.monarch.ui.theme.TextData
-import com.example.monarch.ui.theme.onPrimaryMedium
-import com.example.monarch.viewModel.common.SharedPreference
+import com.example.monarch.presentation.ButtonText
+import com.example.monarch.presentation.Subtitle1
+import com.example.monarch.presentation.theme.Dimention
+import com.example.monarch.presentation.theme.ShapesMain
+import com.example.monarch.presentation.theme.TextData
+import com.example.monarch.presentation.theme.onPrimaryMedium
 import com.example.monarch.viewModel.main.PermissionViewModel
-import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 
 @Composable

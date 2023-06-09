@@ -35,6 +35,16 @@ class DateTime {
             return "${day}д ${hour}ч ${minute}м ${second}c"
         }
 
+        // получить часы из секунд
+        fun getHours(seconds: Long): Long {
+            val minuteInSeconds = seconds / 60
+            val hourInSeconds = minuteInSeconds / 60
+
+            val day = hourInSeconds / 24
+
+            return hourInSeconds - day * 24
+        }
+
         // массив миллисекунд в массив 2021-12-31 10:10:10
         fun timeFormatterInsert(milliSeconds: ArrayList<Long>): ArrayList<String> {
             val calendar = Calendar.getInstance()

@@ -32,7 +32,7 @@ class JobServiceMain {
 
             jobIsScheduler = jobScheduler.schedule(timeUsagePostJob)
         }
-        checkJobStart(jobIsScheduler)
+//        checkJobStart(jobIsScheduler)
     }
 
     private fun checkJobStart(jobIsScheduler: Int) {

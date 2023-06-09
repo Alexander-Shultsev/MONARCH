@@ -1,4 +1,4 @@
-package com.example.monarch.ui.component
+package com.example.monarch.presentation.component
 
 import android.content.ContentValues.TAG
 import android.util.Log
@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.monarch.ui.Subtitle1
+import com.example.monarch.presentation.Subtitle1
 import com.monarchcompany.monarchapp.R
 import java.text.SimpleDateFormat
 import java.util.*

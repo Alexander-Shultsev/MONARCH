@@ -1,18 +1,16 @@
-package com.example.monarch.viewModel.timeused
+package com.example.monarch.presentation.screen.TimeUsedScreen
 
-import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Process
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.monarch.di.App.Companion.getContextInstance
+import com.example.monarch.repository.TimeUsage.TimeUsageQuery
 import com.example.monarch.viewModel.common.DateTime
 import com.example.monarch.viewModel.common.DateTime.Companion.timeFormatterInsert
 import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.TODAY_DATE
@@ -22,7 +20,6 @@ import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.U
 import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.timeHourFormat
 import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.timeMinuteFormat
 import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage.Companion.timeSecondFormat
-import com.example.monarch.repository.TimeUsage.TimeUsageQuery
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageDevice
 import com.example.monarch.repository.dataClass.TimeUsage.TimeUsageInsert
 import java.util.Calendar
@@ -43,13 +40,9 @@ class TimeUsedViewModel : ViewModel() {
     // получения информации об установленных приложениях
     private val packageManager: PackageManager = getContextInstance().packageManager
 
-
-
     // отображение диалогового окна
     private val _dateDialogIsVisible: MutableLiveData<Boolean> = MutableLiveData()
     val dateDialogIsVisible: LiveData<Boolean> = _dateDialogIsVisible
-
-
 
     // выбранная дата
     private val _currentDate: MutableLiveData<Date> = MutableLiveData()
@@ -68,8 +61,6 @@ class TimeUsedViewModel : ViewModel() {
     // имя приложения
     private var applicationName: String = ""
 
-
-
     // инициализация
     init {
         getPackageLabels()
@@ -77,7 +68,7 @@ class TimeUsedViewModel : ViewModel() {
 
         _currentDate.value = TODAY_DATE
         _dateDialogIsVisible.value = false
-        _timeUsageDevice.value = arrayListOf(TimeUsageDevice("", 0L))
+        _timeUsageDevice.value = arrayListOf()
 
         getTimeUsageDevice(_currentDate.value!!)
     }

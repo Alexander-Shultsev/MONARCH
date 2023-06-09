@@ -48,7 +48,7 @@ class TimeUsageQuery: ViewModel() {
     ) {
         viewModelScope.launch {
             try {
-                val result = serviceTimeUsage.getTimeUsageDevice(date)
+                val result = serviceTimeUsage.getTimeUsageDevice(date, 1)
                 val code = result.code()
                 responceDevice.value = result.body()
 

@@ -1,11 +1,9 @@
 package com.example.monarch
 
 import android.app.Activity
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,13 +12,15 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.monarch.ui.theme.MonarchTheme
-import com.example.monarch.viewModel.timeused.TimeUsedViewModel
+import androidx.lifecycle.LifecycleOwner
+import com.example.monarch.presentation.theme.MonarchTheme
 import com.example.monarch.viewModel.timeused.jobservice.JobServiceMain
-import com.example.monarch.ui.screen.DefineStartScreen
+import com.example.monarch.presentation.screen.DefineStartScreen
 import com.example.monarch.viewModel.main.PermissionViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
+
+lateinit var owner: LifecycleOwner
 
 class MainActivity : ComponentActivity() {
 
@@ -30,6 +30,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
+        owner = this
         createObserve()
         setContent()
         service()

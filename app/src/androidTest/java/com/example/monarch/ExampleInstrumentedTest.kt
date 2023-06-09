@@ -1,9 +1,7 @@
 package com.example.monarch
 
-import android.app.usage.UsageStatsManager
-import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.monarch.viewModel.timeused.TimeUsedViewModel
+import com.example.monarch.presentation.screen.TimeUsedScreen.ExperimentInfoModel
 
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,9 +18,9 @@ import java.text.SimpleDateFormat
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        val viewModel = TimeUsedViewModel()
+//        val viewModel = ExperimentInfoModel()
 
-        val date = SimpleDateFormat("dd-MM-yyyy").parse("10-03-2023")
+//        val date = SimpleDateFormat("dd-MM-yyyy").parse("10-03-2023")
 //        val statsManager: UsageStatsManager =
 //            App.getContextInstance().getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
