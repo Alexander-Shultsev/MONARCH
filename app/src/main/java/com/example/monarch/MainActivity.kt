@@ -13,10 +13,10 @@ import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.LifecycleOwner
-import com.example.monarch.presentation.theme.MonarchTheme
+import com.example.monarch.view.theme.MonarchTheme
 import com.example.monarch.viewModel.timeused.jobservice.JobServiceMain
-import com.example.monarch.presentation.screen.DefineStartScreen
-import com.example.monarch.viewModel.main.PermissionViewModel
+import com.example.monarch.view.screen.DefineStartScreen
+import com.example.monarch.viewModel.permission.PermissionViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 

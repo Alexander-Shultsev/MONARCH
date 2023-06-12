@@ -1,13 +1,11 @@
 package com.example.monarch
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.monarch.presentation.screen.TimeUsedScreen.ExperimentInfoModel
 
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
-import java.text.SimpleDateFormat
 
 /**
  * Instrumented test, which will execute on an Android device.

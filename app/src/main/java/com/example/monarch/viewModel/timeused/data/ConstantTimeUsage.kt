@@ -24,6 +24,7 @@ class ConstantTimeUsage {
         val timeHourFormat = SimpleDateFormat("HH", Locale("RU"))
         val timeMinuteFormat = SimpleDateFormat("mm", Locale("RU"))
         val timeSecondFormat = SimpleDateFormat("ss", Locale("RU"))
+        val dateOutput = SimpleDateFormat("dd.MM.yyyy", Locale("RU"))
 
         init {
             TODAY_DATE = currentDate.parse(currentDate.format(Date())) as Date

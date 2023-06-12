@@ -3,7 +3,7 @@ package com.example.monarch.viewModel.timeused.jobservice
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.widget.Toast
-import com.example.monarch.presentation.screen.TimeUsedScreen.TimeUsedViewModel
+import com.example.monarch.view.screen.TimeUsedScreen.TimeUsedViewModel
 import com.example.monarch.viewModel.timeused.data.ConstantTimeUsage
 
 
